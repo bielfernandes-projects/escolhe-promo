@@ -1,3 +1,8 @@
+// Guarda de fronteira: este modulo fala com a API da Shopee usando o app
+// secret e o node:crypto. Se algum client component voltar a importa-lo, o
+// build quebra aqui em vez de falhar silenciosamente no browser.
+import "server-only";
+
 import { createHash } from "node:crypto";
 
 const GRAPHQL_URL = "https://open-api.affiliate.shopee.com.br/graphql";

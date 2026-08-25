@@ -6,8 +6,11 @@
  * text will render in a system fallback. So this waits for document.fonts.ready.
  *
  * Images inside the canvas _must_ be same-origin or CORS-enabled, otherwise
- * the canvas becomes "tainted" and toBlob() throws. Since we re-host all
- * product images in Supabase Storage (our own origin), this is not an issue.
+ * the canvas becomes "tainted" and toBlob() throws. O CDN da Shopee responde
+ * com `access-control-allow-origin: *` (verificado), entao da pra capturar
+ * direto da origem — nao ha re-hospedagem no Storage. Pra isso valer, toda
+ * <img> que carrega a mesma URL precisa de crossOrigin="anonymous", senao o
+ * browser reaproveita uma resposta cacheada sem CORS e contamina o canvas.
  */
 
 import html2canvas from "html2canvas";
@@ -29,7 +32,7 @@ export async function capturarImagem(
   const canvas = await html2canvas(elemento, {
     scale: opcoes?.escala ?? 2, // Dobro da resolução pra crispness em altas DPI
     logging: false,
-    useCORS: true, // Permitir imagens CORS (Supabase Storage é CORS-enabled)
+    useCORS: true, // O CDN da Shopee manda access-control-allow-origin: *
     backgroundColor: "#ffffff", // Fallback caso o bg seja transparent
   });
 

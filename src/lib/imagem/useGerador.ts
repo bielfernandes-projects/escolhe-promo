@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { capturarImagem, download } from "./capturador";
 import type { TemplateId } from "./templates";
-import type { Produto } from "@/lib/shopee/products";
+import type { Produto } from "@/lib/produtos/tipos";
 
 export type EstadoCaptura = "ocioso" | "capturando" | "sucesso" | "erro";
 

@@ -1,120 +1,35 @@
-"use client";
+import Link from "next/link";
+import { listarProdutos } from "@/lib/produtos/repositorio";
+import { VitrineClient } from "./vitrine-client";
 
-import { useEffect, useState } from "react";
-import type { Produto } from "@/lib/shopee/products";
-import { fetchProdutos } from "@/lib/shopee/products";
-import { NICHOS, type Nicho } from "@/lib/shopee/niches";
-import { CardProduto } from "./card-produto";
-import { ModalGerador } from "./modal-gerador";
+export const metadata = { title: "Vitrine do dia — Eita Promo" };
 
-export default function VitrinePage() {
-  const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [nichoFiltro, setNichoFiltro] = useState<Nicho | "todos">("todos");
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
-  const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(
-    null,
-  );
+/**
+ * Server Component de proposito: a Vitrine sai do Supabase, ja filtrada pelo
+ * RLS. Antes esta pagina era "use client" e chamava a Shopee direto do browser,
+ * o que arrastava o app secret pro bundle e falhava sempre.
+ */
+export default async function VitrinePage() {
+  const produtos = await listarProdutos(200);
 
-  useEffect(() => {
-    setCarregando(true);
-    setErro(null);
+  if (produtos.length === 0) {
+    return (
+      <main className="mx-auto w-full max-w-md flex-1 px-5 py-16 text-center">
+        <div className="text-5xl">🗓️</div>
+        <h1 className="mt-4 text-xl font-bold">A Vitrine ainda está vazia</h1>
+        <p className="mt-2 text-sm text-tinta-fraca">
+          Os produtos do dia ainda não foram sincronizados. Isso acontece
+          automaticamente todo dia de manhã.
+        </p>
+        <Link
+          href="/app"
+          className="mt-6 inline-block rounded-xl bg-marca-600 px-5 py-3 font-semibold text-white"
+        >
+          Voltar ao início
+        </Link>
+      </main>
+    );
+  }
 
-    fetchProdutos({ limit: 100 })
-      .then(setProdutos)
-      .catch((err) => {
-        setErro(err instanceof Error ? err.message : "Erro ao buscar produtos");
-      })
-      .finally(() => setCarregando(false));
-  }, []);
-
-  const produtosFiltrados =
-    nichoFiltro === "todos"
-      ? produtos
-      : produtos.filter((p) => p.nicho === nichoFiltro);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Vitrine do Dia
-          </h1>
-          <p className="text-gray-600">
-            {produtosFiltrados.length} produtos disponíveis
-          </p>
-        </div>
-
-        {/* Filtro de nicho */}
-        <div className="mb-6 flex gap-2 flex-wrap">
-          <button
-            onClick={() => setNichoFiltro("todos")}
-            className={`px-4 py-2 rounded-full font-semibold text-sm transition-colors ${
-              nichoFiltro === "todos"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-700 border border-gray-300 hover:border-gray-400"
-            }`}
-          >
-            Todos
-          </button>
-          {NICHOS.map((nicho) => (
-            <button
-              key={nicho}
-              onClick={() => setNichoFiltro(nicho)}
-              className={`px-4 py-2 rounded-full font-semibold text-sm transition-colors ${
-                nichoFiltro === nicho
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              {nicho}
-            </button>
-          ))}
-        </div>
-
-        {/* Conteúdo */}
-        {carregando && (
-          <div className="text-center py-12">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4" />
-            <p className="text-gray-600">Carregando produtos...</p>
-          </div>
-        )}
-
-        {erro && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            Erro: {erro}
-          </div>
-        )}
-
-        {!carregando && !erro && (
-          <>
-            {produtosFiltrados.length === 0 ? (
-              <div className="text-center py-12 text-gray-600">
-                Nenhum produto encontrado neste nicho
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {produtosFiltrados.map((produto) => (
-                  <CardProduto
-                    key={produto.itemId}
-                    produto={produto}
-                    onClick={setProdutoSelecionado}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Modal do gerador */}
-      {produtoSelecionado && (
-        <ModalGerador
-          produto={produtoSelecionado}
-          onClose={() => setProdutoSelecionado(null)}
-        />
-      )}
-    </div>
-  );
+  return <VitrineClient produtos={produtos} />;
 }

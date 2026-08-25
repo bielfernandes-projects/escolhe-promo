@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       if (createError.message.includes("already exists")) {
         // Buscar o user existente
         const { data: listData } = await supabase.auth.admin.listUsers();
-        const user = listData?.users?.find((u: any) => u.email === customer_email);
+        const user = listData?.users?.find((u) => u.email === customer_email);
         if (!user) {
           console.error(`[webhook] User não encontrado: ${customer_email}`);
           return NextResponse.json(

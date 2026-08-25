@@ -5,14 +5,43 @@
  */
 import React from "react";
 import type { ReactNode } from "react";
-import type { Produto } from "@/lib/shopee/products";
+import type { Produto } from "@/lib/produtos/tipos";
 
 export type TemplateId = "feed-simples" | "story-urgencia" | "feed-destaque";
 
-export const TEMPLATES: Record<TemplateId, { nome: string; aspecto: string }> = {
-  "feed-simples": { nome: "Feed Simples", aspecto: "1:1" },
-  "story-urgencia": { nome: "Story Urgência", aspecto: "9:16" },
-  "feed-destaque": { nome: "Feed Destaque", aspecto: "1:1" },
+export type TemplateInfo = {
+  nome: string;
+  /** Só pra mostrar na tela: "1:1" nao e CSS valido. */
+  rotulo: string;
+  /** Sintaxe CSS de verdade — `aspect-ratio` exige barra, nao dois-pontos. */
+  aspecto: string;
+  /** Tamanho real em que o template e capturado. O preview escala a partir daqui. */
+  largura: number;
+  altura: number;
+};
+
+export const TEMPLATES: Record<TemplateId, TemplateInfo> = {
+  "feed-simples": {
+    nome: "Feed Simples",
+    rotulo: "1:1",
+    aspecto: "1 / 1",
+    largura: 1080,
+    altura: 1080,
+  },
+  "story-urgencia": {
+    nome: "Story Urgência",
+    rotulo: "9:16",
+    aspecto: "9 / 16",
+    largura: 1080,
+    altura: 1920,
+  },
+  "feed-destaque": {
+    nome: "Feed Destaque",
+    rotulo: "1:1",
+    aspecto: "1 / 1",
+    largura: 1080,
+    altura: 1080,
+  },
 };
 
 type TemplateProps = {

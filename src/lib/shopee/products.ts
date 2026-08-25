@@ -1,23 +1,14 @@
-import { queryShopee } from "./client";
-import { nichoFromCategoryTrail, type Nicho } from "./niches";
+// Guarda de fronteira: este modulo fala com a API da Shopee usando o app
+// secret e o node:crypto. Se algum client component voltar a importa-lo, o
+// build quebra aqui em vez de falhar silenciosamente no browser.
+import "server-only";
 
-/** A product as the Vitrine needs it, with the Nicho already resolved. */
-export type Produto = {
-  itemId: string;
-  nome: string;
-  imagemUrl: string;
-  /** In BRL. Shopee sends these as decimal strings. */
-  preco: number;
-  /** Fraction, e.g. 0.18 for 18%. */
-  taxaComissao: number;
-  comissao: number;
-  vendas: number;
-  avaliacao: number;
-  nicho: Nicho;
-  /** Affiliate link tied to the app owner's account — powers the Double-Dip. */
-  offerLink: string;
-  produtoLink: string;
-};
+import { queryShopee } from "./client";
+import { nichoFromCategoryTrail } from "./niches";
+import type { Produto } from "@/lib/produtos/tipos";
+
+export type { Produto };
+
 
 type ProductOfferNode = {
   itemId: number;

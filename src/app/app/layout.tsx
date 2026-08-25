@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Cabecalho } from "./cabecalho";
 
 /**
- * Protects every route under /app: only a Supabase session created by the
- * Cakto webhook's magic link grants access. There is no self-signup — see
- * "Arquitetura Pós-Pagamento" in PLAN.md.
+ * Protege tudo que esta sob /app. So uma sessao do Supabase — nascida do magic
+ * link do webhook da Cakto ou do login — da acesso. Nao existe self-signup.
+ *
+ * Quem nao tem sessao vai pro /login, nao pra landing: mandar pra landing era o
+ * que fazia o app parecer quebrado, porque nao havia onde entrar.
  */
 export default async function AppLayout({
   children,
@@ -17,8 +20,13 @@ export default async function AppLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/");
+    redirect("/login");
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <Cabecalho email={user.email ?? ""} />
+      {children}
+    </>
+  );
 }

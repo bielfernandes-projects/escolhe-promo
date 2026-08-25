@@ -20,7 +20,7 @@ Estado do projeto após sessão de grilling + scaffold técnico.
 ### Credenciais & Secrets
 - [x] Shopee Affiliate APP_ID + APP_SECRET no `.env.local`
 - [x] Supabase credenciais no `.env.local`
-- [x] Domínio webhook definido: `https://eitapromo.gf.dev.br/api/webhooks/cakto`
+- [x] Domínio webhook definido: `https://eitapromo.bf.dev.br/api/webhooks/cakto`
 
 > **Nenhum secret é versionado.** `.env.local` e `.mcp.json` estão no `.gitignore`;
 > `.env.example` contém apenas placeholders. Para recriar os MCPs num clone novo:
@@ -58,7 +58,7 @@ Estado do projeto após sessão de grilling + scaffold técnico.
   
 ### Cakto Webhook
 - [ ] Criar webhook em https://app.cakto.com.br/settings/webhooks
-  - URL: `https://eitapromo.gf.dev.br/api/webhooks/cakto`
+  - URL: `https://eitapromo.bf.dev.br/api/webhooks/cakto`
   - Eventos: `purchase_completed`, `order_bump_accepted`
   - Gerar e registrar o `CAKTO_WEBHOOK_SECRET`
   - Implementar validação de assinatura em `src/app/api/webhooks/cakto/route.ts`
@@ -70,7 +70,7 @@ Estado do projeto após sessão de grilling + scaffold técnico.
   - `usuarios` (email, metadata) — será criada automaticamente pelo Supabase Auth
 
 ### Domínio
-- [ ] Configurar DNS (apontar `eitapromo.gf.dev.br` pra Vercel)
+- [ ] Configurar DNS (apontar `eitapromo.bf.dev.br` pra Vercel)
 - [ ] Deploy de preview na Vercel pra testar webhook real
 
 ## Próximos Passos
@@ -82,4 +82,4 @@ Estado do projeto após sessão de grilling + scaffold técnico.
    - Gerador de Copy (Spintax client-side)
    - Gerador de Imagens (HTML-to-Image)
    - Webhook Cakto (liberar acesso + magic link)
-4. **Deploy production** → `eitapromo.gf.dev.br`
+4. **Deploy production** → `eitapromo.bf.dev.br`

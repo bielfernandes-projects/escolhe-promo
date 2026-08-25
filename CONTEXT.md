@@ -12,8 +12,11 @@ _Avoid_: Catálogo
 Um item da Vitrine, obtido via `productOfferV2` da Shopee Affiliate Open API.
 
 **Nicho**:
-Categoria de um Produto (Casa, Beleza, Eletrônicos, Moda, Bebê & Infantil, Pet, Esporte & Fitness, Cozinha, Outros) usada como filtro na Vitrine. Não vem da API da Shopee — é atribuída por tagueamento de palavra-chave no título do Produto.
-_Avoid_: Categoria (fora da referência ao campo interno), tag
+Categoria de um Produto (Casa, Beleza, Eletrônicos, Moda, Bebê & Infantil, Pet, Esporte & Fitness, Cozinha, Outros) usada como filtro na Vitrine. Derivado da Trilha de Categoria da Shopee, não do título do Produto.
+_Avoid_: Categoria (esse termo designa a taxonomia da Shopee, não a nossa), tag
+
+**Trilha de Categoria**:
+O array `productCatIds` que a Shopee devolve para um Produto: os IDs numéricos de categoria do nível 1 ao 3, do mais geral ao mais específico. É a fonte de verdade a partir da qual o Nicho é derivado.
 
 **Template de Copy**:
 Conjunto de quatro slots (Abertura, Benefício, Urgência, Fechamento), cada um com um array de variações; o sorteio de uma variação por slot gera uma copy única.

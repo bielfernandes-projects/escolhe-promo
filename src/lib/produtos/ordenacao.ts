@@ -11,8 +11,8 @@ export const OPCOES_ORDENACAO = [
 
 export type Ordenacao = (typeof OPCOES_ORDENACAO)[number];
 
-/** Padrao em toda aba: maior comissao primeiro — e o que vale mais pro afiliado. */
-export const ORDENACAO_PADRAO: Ordenacao = "comissao-desc";
+/** Padrao em toda aba: mais vendido primeiro — o que converte de verdade. */
+export const ORDENACAO_PADRAO: Ordenacao = "vendas-desc";
 
 export const ROTULOS_ORDENACAO: Record<Ordenacao, string> = {
   "comissao-desc": "Maior comissão",

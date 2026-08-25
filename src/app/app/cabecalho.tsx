@@ -28,6 +28,12 @@ export function Cabecalho({ email }: { email: string }) {
           <span className="hidden max-w-[16ch] truncate text-xs text-tinta-fraca sm:block">
             {email}
           </span>
+          <Link
+            href="/app/configuracoes"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-tinta-fraca transition-colors hover:bg-tela"
+          >
+            Configurações
+          </Link>
           <button
             onClick={sair}
             disabled={saindo}

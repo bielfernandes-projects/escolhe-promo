@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Produto } from "@/lib/produtos/tipos";
 import { criarGeradorDeCopy, type Canal } from "@/lib/copy/gerador";
 import { TEMPLATES, renderTemplate, type TemplateId } from "@/lib/imagem/templates";
 import { useGeradorImagem } from "@/lib/imagem/useGerador";
+import { linkAfiliadoPessoal } from "./link-afiliado";
 
 type ModalGeradorProps = {
   produto: Produto;
@@ -22,6 +23,17 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
   const [copy, setCopy] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [gerador] = useState(() => criarGeradorDeCopy());
+
+  // Comeca com o link da casa (Double-Dip) e troca pro pessoal se o usuario
+  // tiver credenciais salvas — ver src/app/app/vitrine/link-afiliado.ts.
+  // O modal e remontado por produto (nunca troca de produto em vida), entao o
+  // estado inicial ja cobre o link da casa; o efeito so troca pro pessoal.
+  const [linkAtivo, setLinkAtivo] = useState(produto.offerLink);
+  useEffect(() => {
+    linkAfiliadoPessoal(produto.produtoLink).then((pessoal) => {
+      if (pessoal) setLinkAtivo(pessoal);
+    });
+  }, [produto.produtoLink]);
 
   const { refTemplate, templateAtual, setTemplateAtual, estado, erro, gerar } =
     useGeradorImagem(produto);
@@ -46,7 +58,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
   }, [info]);
 
   function gerarCopyClick() {
-    setCopy(gerador.proxima(produto, { canal, linkAfiliado: produto.offerLink }));
+    setCopy(gerador.proxima(produto, { canal, linkAfiliado: linkAtivo }));
     setCopiado(false);
   }
 
@@ -133,14 +145,34 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                   <div className="rounded-xl bg-tela p-4 text-sm whitespace-pre-wrap">
                     {copy}
                   </div>
-                  <button
-                    onClick={copiarClick}
-                    className={`w-full rounded-xl px-4 py-3.5 font-semibold text-white transition-colors ${
-                      copiado ? "bg-emerald-600" : "bg-tinta hover:opacity-90"
-                    }`}
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(copy)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full rounded-xl bg-[#25D366] px-4 py-3.5 text-center font-semibold text-white transition-colors hover:opacity-90"
                   >
-                    {copiado ? "Copiado! ✅" : "Copiar copy 📋"}
-                  </button>
+                    Enviar no WhatsApp 💬
+                  </a>
+                  <div className="flex gap-2">
+                    {typeof navigator !== "undefined" && "share" in navigator && (
+                      <button
+                        onClick={() => navigator.share({ text: copy }).catch(() => {})}
+                        className="flex-1 rounded-xl bg-tinta px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90"
+                      >
+                        Compartilhar
+                      </button>
+                    )}
+                    <button
+                      onClick={copiarClick}
+                      className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        copiado
+                          ? "bg-emerald-600 text-white"
+                          : "bg-tela text-tinta hover:bg-black/5"
+                      }`}
+                    >
+                      {copiado ? "Copiado! ✅" : "Copiar 📋"}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -192,7 +224,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
               )}
 
               <button
-                onClick={gerar}
+                onClick={() => gerar("compartilhar")}
                 disabled={estado === "capturando"}
                 className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-60"
               >
@@ -200,7 +232,14 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                   ? "Gerando..."
                   : estado === "sucesso"
                     ? "Pronto! ✅"
-                    : "Baixar imagem 📸"}
+                    : "Compartilhar imagem 📸"}
+              </button>
+              <button
+                onClick={() => gerar("baixar")}
+                disabled={estado === "capturando"}
+                className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5 disabled:opacity-60"
+              >
+                Baixar imagem
               </button>
             </div>
           )}

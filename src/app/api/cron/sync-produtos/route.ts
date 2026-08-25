@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const comecou = Date.now();
 
   try {
-    const produtos = await fetchProdutos({ limit: 200 });
+    const produtos = await fetchProdutos({ limit: 400 });
     const gravados = await salvarProdutos(produtos);
 
     console.log(`[cron/sync-produtos] ${gravados} produtos gravados`);

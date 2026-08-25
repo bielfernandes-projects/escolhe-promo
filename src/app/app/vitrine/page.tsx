@@ -10,7 +10,7 @@ export const metadata = { title: "Vitrine do dia — Eita Promo" };
  * o que arrastava o app secret pro bundle e falhava sempre.
  */
 export default async function VitrinePage() {
-  const produtos = await listarProdutos(200);
+  const produtos = await listarProdutos(400);
 
   if (produtos.length === 0) {
     return (

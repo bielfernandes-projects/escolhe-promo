@@ -52,46 +52,31 @@ export async function capturarImagem(
 }
 
 /**
- * Entrega o PNG pro usuario.
- *
- * Duas armadilhas que so aparecem rodando de verdade:
- *
- * 1. `navigator.share` exige ativacao do usuario ainda valida. A captura do
- *    html2canvas leva alguns segundos, e nesse meio tempo a ativacao do clique
- *    expira — o share entao falha com NotAllowedError ("Permission denied").
- *    Por isso o share e uma tentativa, nao um caminho sem volta: se falhar,
- *    cai no download comum em vez de estourar o erro na cara do usuario.
- * 2. Revogar o object URL no mesmo tick do clique cancela o download em alguns
- *    browsers. A revogacao fica pra depois.
+ * Abre a folha nativa de compartilhar com o PNG (Instagram, TikTok, WhatsApp,
+ * Pinterest, o que tiver instalado). Cai pro download comum se o browser nao
+ * suportar share de arquivo, ou se o share falhar por qualquer motivo que nao
+ * seja o usuario ter fechado a folha (ativacao expirada, etc.) — nunca estoura
+ * o erro na cara do usuario, so entrega o arquivo do jeito que der.
  */
-export async function download(blob: Blob, nomeArquivo: string): Promise<void> {
+export async function compartilharImagem(blob: Blob, nomeArquivo: string): Promise<void> {
   const arquivo = new File([blob], nomeArquivo, { type: "image/png" });
 
-  // So no iOS. No desktop o share abre a janela nativa do sistema, que fica
-  // pendurada esperando o usuario e trava o botao em "Gerando..." — ali um
-  // download comum e o que a pessoa espera de um botao "Baixar imagem".
-  if (ehIOS() && navigator.canShare?.({ files: [arquivo] })) {
-    try {
-      await navigator.share({ files: [arquivo] });
-      return;
-    } catch (erro) {
-      // Usuario fechou a folha de compartilhar: nao e falha, nao insiste.
-      if (erro instanceof DOMException && erro.name === "AbortError") return;
-      // Qualquer outro caso (ativacao expirada, share indisponivel de fato):
-      // segue pro download comum abaixo.
-    }
+  if (!navigator.canShare?.({ files: [arquivo] })) {
+    baixarViaLink(blob, nomeArquivo);
+    return;
   }
 
-  baixarViaLink(blob, nomeArquivo);
+  try {
+    await navigator.share({ files: [arquivo] });
+  } catch (erro) {
+    if (erro instanceof DOMException && erro.name === "AbortError") return;
+    baixarViaLink(blob, nomeArquivo);
+  }
 }
 
-/** iPadOS 13+ se apresenta como Mac; maxTouchPoints desambigua. */
-function ehIOS(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
+/** Download direto, sem tentar share — o que um botao "Baixar" deve fazer. */
+export async function baixarImagem(blob: Blob, nomeArquivo: string): Promise<void> {
+  baixarViaLink(blob, nomeArquivo);
 }
 
 function baixarViaLink(blob: Blob, nomeArquivo: string): void {

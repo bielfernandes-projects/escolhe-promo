@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { capturarImagem, download } from "./capturador";
+import { capturarImagem, compartilharImagem, baixarImagem } from "./capturador";
 import type { TemplateId } from "./templates";
 import type { Produto } from "@/lib/produtos/tipos";
 
 export type EstadoCaptura = "ocioso" | "capturando" | "sucesso" | "erro";
+type Entrega = "compartilhar" | "baixar";
 
 export function useGeradorImagem(produto: Produto) {
   const refTemplate = useRef<HTMLDivElement>(null);
@@ -13,7 +14,7 @@ export function useGeradorImagem(produto: Produto) {
   const [estado, setEstado] = useState<EstadoCaptura>("ocioso");
   const [erro, setErro] = useState<string | null>(null);
 
-  const gerar = useCallback(async () => {
+  const gerar = useCallback(async (entrega: Entrega = "compartilhar") => {
     if (!refTemplate.current) {
       setErro("Template não encontrado (falha interna)");
       setEstado("erro");
@@ -26,7 +27,9 @@ export function useGeradorImagem(produto: Produto) {
     try {
       const blob = await capturarImagem(refTemplate.current);
       const nomeArquivo = `${produto.nome.slice(0, 30).replace(/\s+/g, "-")}-${Date.now()}.png`;
-      await download(blob, nomeArquivo);
+      await (entrega === "compartilhar"
+        ? compartilharImagem(blob, nomeArquivo)
+        : baixarImagem(blob, nomeArquivo));
       setEstado("sucesso");
       setTimeout(() => setEstado("ocioso"), 2000);
     } catch (err) {

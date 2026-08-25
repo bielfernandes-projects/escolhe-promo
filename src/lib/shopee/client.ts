@@ -25,9 +25,12 @@ class ShopeeApiError extends Error {
 export async function queryShopee<T>(
   query: string,
   variables?: Record<string, unknown>,
+  // Permite assinar com as credenciais do PROPRIO usuario (link de afiliado
+  // pessoal, em vez do link da casa). Sem isso, cai nas env vars do app.
+  credenciais?: { appId: string; appSecret: string },
 ): Promise<T> {
-  const appId = process.env.SHOPEE_AFFILIATE_APP_ID;
-  const appSecret = process.env.SHOPEE_AFFILIATE_APP_SECRET;
+  const appId = credenciais?.appId ?? process.env.SHOPEE_AFFILIATE_APP_ID;
+  const appSecret = credenciais?.appSecret ?? process.env.SHOPEE_AFFILIATE_APP_SECRET;
 
   if (!appId || !appSecret) {
     throw new ShopeeApiError(

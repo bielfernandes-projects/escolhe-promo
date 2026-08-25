@@ -78,3 +78,18 @@ Em produção: `https://eitapromo.bf.dev.br` (Vercel, deploy automático a cada 
 6. **Fase 6 — Campanha paga**: Meta Ads, verba de teste R$20-50/dia por 1-2 semanas antes de escalar. Business Manager já existe; falta o Pixel ativo no site (depende das env vars da Fase 1). Execução: o agente opera o Ads Manager pelo navegador com o dono do produto acompanhando — nenhum clique que comprometa orçamento é feito sem confirmação em tempo real.
 
 Meta: primeiros R$10k de faturamento na Cakto.
+
+## Integração Meta Ads
+
+- MCP oficial adicionado (`https://mcp.facebook.com/ads`, confirmado real via
+  DNS + resposta HTTP, não é um chute) — carrega só depois de reconectar a
+  sessão, e requer OAuth com o login do próprio dono do produto (nenhuma
+  senha passa pelo agente).
+- Pixel ID `1632607598300164` configurado (local + Vercel produção) — o
+  Pixel client-side já está ativo em produção.
+- O token que veio junto (`SYSTEM_USER`, nunca expira) tem só o escopo
+  `read_ads_dataset_quality` — serve pra diagnóstico, não pra enviar evento
+  (Conversions API) nem gerenciar campanha. Ainda falta um token com escopo
+  de `ads_management`/`business_management`, gerado em Gerenciador de
+  Eventos → Fontes de Dados → [pixel] → Configurações → Conversions API →
+  "Gerar token de acesso" (é um botão diferente do token geral da API).

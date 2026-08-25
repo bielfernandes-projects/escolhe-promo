@@ -17,7 +17,7 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="font-bold">1. Controlador dos dados</h2>
           <p>
-            <strong>[RAZÃO SOCIAL — CNPJ a preencher]</strong> é quem decide
+            <strong>Gabriel Monteiro Fernandes, CPF 074.898.793-29, Fortaleza-CE</strong> é quem decide
             como seus dados são usados no Eita Promo. Contato do encarregado
             (DPO):{" "}
             <a href="mailto:contato@eitapromo.bf.dev.br" className="text-marca-600 underline">

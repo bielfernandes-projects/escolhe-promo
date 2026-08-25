@@ -3,8 +3,8 @@ import Link from "next/link";
 export const metadata = { title: "Termos de Uso — Eita Promo" };
 
 /**
- * Rascunho informado por LGPD/CDC, nao revisao juridica. [RAZAO SOCIAL / CNPJ]
- * precisa ser preenchido antes de usar isso pra valer em trafego pago real.
+ * Rascunho informado por LGPD/CDC, nao revisao juridica — vale como ponto de
+ * partida, nao substitui revisao por advogado antes de escalar trafego pago.
  */
 export default function TermosPage() {
   return (
@@ -20,7 +20,7 @@ export default function TermosPage() {
           <h2 className="font-bold">1. Quem somos</h2>
           <p>
             O Eita Promo é um serviço operado por{" "}
-            <strong>[RAZÃO SOCIAL — CNPJ a preencher]</strong>, contato:{" "}
+            <strong>Gabriel Monteiro Fernandes, CPF 074.898.793-29, Fortaleza-CE</strong>, contato:{" "}
             <a href="mailto:contato@eitapromo.bf.dev.br" className="text-marca-600 underline">
               contato@eitapromo.bf.dev.br
             </a>
@@ -108,7 +108,7 @@ export default function TermosPage() {
 
         <section>
           <h2 className="font-bold">10. Foro</h2>
-          <p>Fica eleito o foro da comarca de [CIDADE/UF a preencher].</p>
+          <p>Fica eleito o foro da comarca de Fortaleza-CE.</p>
         </section>
       </div>
     </main>

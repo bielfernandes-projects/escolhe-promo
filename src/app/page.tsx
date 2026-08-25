@@ -10,11 +10,19 @@ export default function LandingPage() {
           produtos da Shopee no WhatsApp e no Instagram em segundos.
         </p>
         <a
-          href="#"
+          href="https://cakto.com.br/checkout"
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex h-12 items-center justify-center rounded-full bg-foreground px-8 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
         >
           Quero acesso vitalício
         </a>
+        <div className="text-xs text-gray-400 mt-4">
+          ou{" "}
+          <a href="/test/login" className="text-gray-600 hover:underline">
+            faça login com email pra testar
+          </a>
+        </div>
       </main>
     </div>
   );

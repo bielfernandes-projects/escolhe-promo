@@ -143,8 +143,11 @@ export const StoryUrgencia: React.FC<TemplateProps> = ({ produto }) => (
         bottom: 0,
         left: 0,
         right: 0,
-        height: "45%",
-        backgroundColor: "rgba(0,0,0,0.7)",
+        height: "55%",
+        // Corte reto deixava uma emenda dura no meio da foto; o degrade
+        // funde o texto na imagem.
+        backgroundImage:
+          "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.88) 100%)",
         display: "flex",
         flexDirection: "column",
         padding: "40px",

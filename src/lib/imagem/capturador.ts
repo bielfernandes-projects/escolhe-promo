@@ -30,7 +30,10 @@ export async function capturarImagem(
   }
 
   const canvas = await html2canvas(elemento, {
-    scale: opcoes?.escala ?? 2, // Dobro da resolução pra crispness em altas DPI
+    // Os templates ja sao desenhados em 1080px, a resolucao nativa de Feed e
+    // Story. Dobrar pra 2160 so quadruplicava o arquivo (3,5 MB por imagem)
+    // sem ganho visivel — peso ruim pra quem posta pelo celular.
+    scale: opcoes?.escala ?? 1,
     logging: false,
     useCORS: true, // O CDN da Shopee manda access-control-allow-origin: *
     backgroundColor: "#ffffff", // Fallback caso o bg seja transparent
@@ -49,31 +52,59 @@ export async function capturarImagem(
 }
 
 /**
- * Downloads a blob to the user's device with a given filename.
- * Falls back to navigator.share on iOS (PWA) when available.
+ * Entrega o PNG pro usuario.
+ *
+ * Duas armadilhas que so aparecem rodando de verdade:
+ *
+ * 1. `navigator.share` exige ativacao do usuario ainda valida. A captura do
+ *    html2canvas leva alguns segundos, e nesse meio tempo a ativacao do clique
+ *    expira — o share entao falha com NotAllowedError ("Permission denied").
+ *    Por isso o share e uma tentativa, nao um caminho sem volta: se falhar,
+ *    cai no download comum em vez de estourar o erro na cara do usuario.
+ * 2. Revogar o object URL no mesmo tick do clique cancela o download em alguns
+ *    browsers. A revogacao fica pra depois.
  */
 export async function download(blob: Blob, nomeArquivo: string): Promise<void> {
-  // Em um PWA no iOS, download programático não funciona confiável.
-  // navigator.share abre o native sheet (compartilhar, salvar, etc.).
-  if (navigator.share && navigator.canShare?.({ files: [new File([blob], nomeArquivo)] })) {
-    await navigator.share({
-      files: [new File([blob], nomeArquivo)],
-    });
-    return;
+  const arquivo = new File([blob], nomeArquivo, { type: "image/png" });
+
+  // So no iOS. No desktop o share abre a janela nativa do sistema, que fica
+  // pendurada esperando o usuario e trava o botao em "Gerando..." — ali um
+  // download comum e o que a pessoa espera de um botao "Baixar imagem".
+  if (ehIOS() && navigator.canShare?.({ files: [arquivo] })) {
+    try {
+      await navigator.share({ files: [arquivo] });
+      return;
+    } catch (erro) {
+      // Usuario fechou a folha de compartilhar: nao e falha, nao insiste.
+      if (erro instanceof DOMException && erro.name === "AbortError") return;
+      // Qualquer outro caso (ativacao expirada, share indisponivel de fato):
+      // segue pro download comum abaixo.
+    }
   }
 
-  // Fallback: abra a imagem numa aba nova — usuário salva via long-press no mobile.
+  baixarViaLink(blob, nomeArquivo);
+}
+
+/** iPadOS 13+ se apresenta como Mac; maxTouchPoints desambigua. */
+function ehIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+function baixarViaLink(blob: Blob, nomeArquivo: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
   link.download = nomeArquivo;
+  link.rel = "noopener";
 
-  try {
-    // Trigger download em desktops.
-    document.body.appendChild(link);
-    link.click();
-  } finally {
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  // Da tempo do browser comecar a baixar antes de soltar o blob.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

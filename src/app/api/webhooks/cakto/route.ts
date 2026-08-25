@@ -149,14 +149,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Disparar magic link
-    // O Supabase enviará um e-mail com um link que, quando clicado, faz login
-    // automático. Não preciso fazer nada mais — o user vai usar o link.
-    const { error: linkError } = await supabase.auth.admin.generateLink({
-      type: "magiclink",
+    // 5. Disparar magic link de acesso.
+    //
+    // Precisa ser signInWithOtp, nao admin.generateLink: generateLink apenas
+    // devolve o link, sem enviar e-mail nenhum — o comprador ficaria sem nada.
+    //
+    // O emailRedirectTo aponta pro /auth/confirm, nunca direto pra uma pagina
+    // protegida: e la que o token vira sessao. Mandar direto pro /app faz o
+    // comprador cair no login sem nunca ter sido logado.
+    const { error: linkError } = await supabase.auth.signInWithOtp({
       email: customer_email,
       options: {
-        redirectTo: `${request.nextUrl.origin}/app`,
+        emailRedirectTo: `${request.nextUrl.origin}/auth/confirm?next=/app/vitrine`,
+        // O usuario ja foi criado no passo anterior.
+        shouldCreateUser: false,
       },
     });
 

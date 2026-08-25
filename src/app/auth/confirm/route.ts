@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { excedeuLimite } from "@/lib/seguranca/limite-tentativas";
 
 /**
  * Onde o magic link vira sessao de verdade.
@@ -24,6 +25,13 @@ export async function GET(request: NextRequest) {
 
   const tokenHash = searchParams.get("token_hash");
   const tipo = searchParams.get("type") as EmailOtpType | null;
+
+  // token_hash e um segredo longo e aleatorio, entao forca bruta de verdade
+  // nao e viavel — mas limitar por IP ainda barata enumeracao/DoS baratos.
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "desconhecido";
+  if (excedeuLimite(`auth-confirm:${ip}`, 20, 5 * 60 * 1000)) {
+    return NextResponse.redirect(new URL("/login?erro=link_expirado", origin));
+  }
 
   if (!tokenHash || !tipo) {
     return NextResponse.redirect(

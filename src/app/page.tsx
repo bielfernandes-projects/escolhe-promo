@@ -148,6 +148,15 @@ export default function LandingPage() {
             Entrar
           </Link>
         </p>
+        <p className="mt-2">
+          <Link href="/termos" className="underline underline-offset-4 hover:text-tinta">
+            Termos de Uso
+          </Link>{" "}
+          ·{" "}
+          <Link href="/privacidade" className="underline underline-offset-4 hover:text-tinta">
+            Política de Privacidade
+          </Link>
+        </p>
       </footer>
     </div>
   );

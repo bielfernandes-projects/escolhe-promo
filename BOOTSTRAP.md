@@ -1,29 +1,33 @@
 # Bootstrap Checklist — Eita Promo
 
-Estado do projeto após sessão de grilling + scaffold técnico.
+Checklist de setup inicial. **Todo item abaixo está concluído** — o projeto
+está em produção. Pra estado atual e próximos passos, ver `PLAN.md` (seções
+"Estado atual" e "Roadmap combinado com o dono do produto").
 
 ## ✅ Concluído
 
 ### Arquitetura & Decisões
 - [x] Sessão de grilling (3 rodadas) fechando stack, gateway, armazenamento, auth
-- [x] `PLAN.md` — escopo MVP, Go-To-Market, stack, arquitetura pós-pagamento, riscos conhecidos
+- [x] `PLAN.md` — escopo MVP, Go-To-Market, stack, arquitetura pós-pagamento, riscos conhecidos, estado atual e roadmap
 - [x] `CONTEXT.md` — glossário de domínio (Vitrine, Nicho, Template Visual, etc.)
 
 ### Infraestrutura
 - [x] Next.js 16 (TypeScript, App Router, Tailwind CSS)
-- [x] Linkado à Vercel (`bielfernandes-projects-projects/eita-promo`)
-- [x] Supabase project criado (`rorlucaegorqgdtbqfeb`)
-- [x] Credenciais Supabase configuradas (URL + ANON_KEY + SERVICE_ROLE_KEY)
-- [x] MCP Supabase integrado ao projeto
-- [x] MCP Cakto integrado ao projeto (com credenciais)
+- [x] Vercel: projeto `eita-promo`, deploy automático a cada push no `main`
+- [x] Domínio de produção: `https://eitapromo.bf.dev.br` (DNS gerenciado pela Vercel)
+- [x] Repositório GitHub privado: `github.com/bielfernandes-projects/eita-promo`
+- [x] Supabase project (`rorlucaegorqgdtbqfeb`) com todas as tabelas e RLS
+- [x] SMTP próprio (Resend) configurado no Supabase Auth — o provedor padrão
+      tem limite de envio baixo demais pra tráfego pago
+- [x] Vercel Analytics ligado
 
 ### Credenciais & Secrets
-- [x] Shopee Affiliate APP_ID + APP_SECRET no `.env.local`
-- [x] Supabase credenciais no `.env.local`
-- [x] Domínio webhook definido: `https://eitapromo.bf.dev.br/api/webhooks/cakto`
+- [x] Todas as env vars configuradas local (`.env.local`) e produção (Vercel)
+- [x] `ENCRYPTION_KEY` pra cifrar credenciais de terceiros salvas pelo usuário
 
-> **Nenhum secret é versionado.** `.env.local` e `.mcp.json` estão no `.gitignore`;
-> `.env.example` contém apenas placeholders. Para recriar os MCPs num clone novo:
+> **Nenhum secret é versionado.** `.env.local` e `.mcp.json` estão no
+> `.gitignore`; `.env.example` documenta todas as chaves necessárias (sem
+> valores). Pra recriar os MCPs num clone novo:
 >
 > ```bash
 > claude mcp add --scope project --transport http supabase \
@@ -32,54 +36,34 @@ Estado do projeto após sessão de grilling + scaffold técnico.
 > claude mcp add --scope project --transport http cakto https://mcp.cakto.com.br \
 >   --header "X-Cakto-Client-Id: <client-id>" \
 >   --header "X-Cakto-Client-Secret: <client-secret>"
+>
+> claude mcp add --transport http resend https://mcp.resend.com/mcp \
+>   --header "Authorization: Bearer <resend-api-key>"
 > ```
 
-### Código Scaffold
-- [x] Landing page pública (`src/app/page.tsx`)
-- [x] Layout protegido por Supabase Auth (`src/app/app/layout.tsx`)
-- [x] Rota webhook stub (`src/app/api/webhooks/cakto/route.ts`)
-- [x] Clients Supabase (browser/server/admin)
-- [x] Manifest PWA
-- [x] `.env.example` com documentação
+### Código & Features
+- [x] Landing, login (senha + magic link), Vitrine (filtro + ordenação),
+      gerador de copy, gerador de imagem, Configurações (senha + API Shopee
+      própria), webhook Cakto, cron diário de sincronização
+- [x] Termos de Uso e Política de Privacidade (`/termos`, `/privacidade`) —
+      rascunho informado por LGPD/CDC, **não é revisão jurídica**
+- [x] Meta Pixel + Conversions API — código pronto, em no-op até as env vars
+      `NEXT_PUBLIC_META_PIXEL_ID` / `META_PIXEL_ID` / `META_CONVERSIONS_API_TOKEN`
+      serem preenchidas
+- [x] Testes automatizados (Vitest — `npm run test`)
+- [x] Rate limit em login e confirmação de magic link
 
 ### Validação
-- [x] `npm run build` passa sem erros
-- [x] `npm run lint` limpo
-- [x] Rota `/` respondeu 200
-- [x] Estrutura de rotas e tipos TypeScript corretos
+- [x] `npm run build`, `npm run lint`, `npm run test` — todos limpos
+- [x] Fluxo completo testado no navegador: login, Vitrine, geração de copy/
+      imagem, compartilhamento
+- [x] Deploy de produção testado ponta a ponta (rotas, auth, cron)
 
-## 🔲 Pendentes
+## Pendências que só o dono do produto resolve
 
-### Shopee API Validation
-- [ ] Confirmar autenticação correta da API Shopee `productOfferV2`
-  - Arquivo de teste: `scripts/test-shopee-api.ts`
-  - Precisa: Bearer token OAuth ou API key específica do seu projeto Shopee
-  - Validar se o campo de categoria existe (decidirá se precisa tagueador de Nicho)
-  
-### Cakto Webhook
-- [ ] Criar webhook em https://app.cakto.com.br/settings/webhooks
-  - URL: `https://eitapromo.bf.dev.br/api/webhooks/cakto`
-  - Eventos: `purchase_completed`, `order_bump_accepted`
-  - Gerar e registrar o `CAKTO_WEBHOOK_SECRET`
-  - Implementar validação de assinatura em `src/app/api/webhooks/cakto/route.ts`
-
-### Supabase Schema
-- [ ] Criar tabelas no Supabase:
-  - `produtos` (itemId, productName, price, commission, nicho, imageUrl, shopeeLink)
-  - `compras` (userId, lifetime, ebook_turbinar, createdAt)
-  - `usuarios` (email, metadata) — será criada automaticamente pelo Supabase Auth
-
-### Domínio
-- [ ] Configurar DNS (apontar `eitapromo.bf.dev.br` pra Vercel)
-- [ ] Deploy de preview na Vercel pra testar webhook real
-
-## Próximos Passos
-
-1. **Shimmy time** — teste manual do webhook Cakto (com ngrok ou deploy preview)
-2. **Validar Shopee API** — confirmar autenticação e presença de categoria
-3. **Implementar features** — por ordem:
-   - Vitrine (fetch + cache no Supabase)
-   - Gerador de Copy (Spintax client-side)
-   - Gerador de Imagens (HTML-to-Image)
-   - Webhook Cakto (liberar acesso + magic link)
-4. **Deploy production** → `eitapromo.bf.dev.br`
+- [ ] `[RAZÃO SOCIAL / CNPJ / CIDADE-UF]` nos Termos/Privacidade — hoje são
+      placeholders
+- [ ] `NEXT_PUBLIC_META_PIXEL_ID`, `META_PIXEL_ID`, `META_CONVERSIONS_API_TOKEN`
+      — pegar no Gerenciador de Eventos do Meta Business Manager
+- [ ] Ver `PLAN.md` → "Roadmap combinado" pras próximas fases (Canva, logo,
+      copy/criativo, campanha)

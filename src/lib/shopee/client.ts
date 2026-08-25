@@ -38,37 +38,63 @@ export async function queryShopee<T>(
     );
   }
 
-  const payload = JSON.stringify({ query, variables });
-  const timestamp = Math.floor(Date.now() / 1000);
-  const signature = createHash("sha256")
-    .update(`${appId}${timestamp}${payload}${appSecret}`)
-    .digest("hex");
+  // O timestamp entra na assinatura, entao o payload/assinatura precisam ser
+  // recalculados a cada tentativa — reusar os de uma tentativa anterior faria
+  // a Shopee rejeitar por timestamp fora da janela de ~5 minutos.
+  const MAX_TENTATIVAS = 3;
+  let ultimoErro: unknown;
 
-  const response = await fetch(GRAPHQL_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `SHA256 Credential=${appId}, Timestamp=${timestamp}, Signature=${signature}`,
-    },
-    body: payload,
-  });
+  for (let tentativa = 1; tentativa <= MAX_TENTATIVAS; tentativa++) {
+    const payload = JSON.stringify({ query, variables });
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signature = createHash("sha256")
+      .update(`${appId}${timestamp}${payload}${appSecret}`)
+      .digest("hex");
 
-  if (!response.ok) {
-    throw new ShopeeApiError(`HTTP ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `SHA256 Credential=${appId}, Timestamp=${timestamp}, Signature=${signature}`,
+        },
+        body: payload,
+      });
+
+      // 5xx/429 sao falhas transitorias do lado da Shopee — vale tentar de
+      // novo. 4xx (exceto 429) e erro nosso (credencial, query invalida);
+      // repetir so atrasa a falha, entao estoura na hora.
+      if (!response.ok) {
+        if (response.status < 500 && response.status !== 429) {
+          throw new ShopeeApiError(`HTTP ${response.status} ${response.statusText}`);
+        }
+        throw new ShopeeApiError(
+          `HTTP ${response.status} ${response.statusText} (tentativa ${tentativa}/${MAX_TENTATIVAS})`,
+        );
+      }
+
+      const body = (await response.json()) as {
+        data?: T;
+        errors?: Array<{ message: string }>;
+      };
+
+      if (body.errors?.length) {
+        throw new ShopeeApiError(body.errors.map((e) => e.message).join("; "));
+      }
+      if (!body.data) {
+        throw new ShopeeApiError("resposta sem dados");
+      }
+
+      return body.data;
+    } catch (erro) {
+      ultimoErro = erro;
+      const definitivo =
+        erro instanceof ShopeeApiError && !erro.message.includes("tentativa");
+      if (definitivo || tentativa === MAX_TENTATIVAS) break;
+      // Backoff exponencial: 300ms, 900ms.
+      await new Promise((r) => setTimeout(r, 300 * 3 ** (tentativa - 1)));
+    }
   }
 
-  const body = (await response.json()) as {
-    data?: T;
-    errors?: Array<{ message: string }>;
-  };
-
-  if (body.errors?.length) {
-    throw new ShopeeApiError(body.errors.map((e) => e.message).join("; "));
-  }
-
-  if (!body.data) {
-    throw new ShopeeApiError("resposta sem dados");
-  }
-
-  return body.data;
+  throw ultimoErro;
 }

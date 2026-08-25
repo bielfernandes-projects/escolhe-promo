@@ -51,4 +51,30 @@ Micro SaaS B2C que resolve a dor operacional de afiliados iniciantes da Shopee (
 
 - Suporte a outras plataformas de afiliação (AliExpress, Magalu).
 - Vídeo tutorial embutido (GIFs ensinando a pegar links e recortar fotos da Shopee).
-- **Integração de Afiliado Própria**: o cliente final conecta suas próprias credenciais da API de Afiliados Shopee pra que o app gere automaticamente o link de afiliado dele a partir da URL do produto colada, em vez de colar um link já criado manualmente. Fora do MVP porque guardar credenciais de API de terceiros com segurança (criptografia, rotação, revogação) é uma superfície de risco considerável pra uma v1.
+- ~~**Integração de Afiliado Própria**~~ — **Implementado.** Em Configurações (`src/app/app/configuracoes/`), o usuário salva App ID/Secret da própria conta Shopee; `src/app/app/vitrine/link-afiliado.ts` gera o link pessoal via mutation `generateShortLink`, com fallback silencioso pro link da casa (Double-Dip) se não houver credencial ou a chamada falhar. O App Secret é criptografado em repouso (AES-256-GCM, `src/lib/seguranca/criptografia.ts`) — nunca passa em texto puro do browser pro banco, a escrita acontece via server action (`src/app/app/configuracoes/acoes.ts`).
+
+## Estado atual (25/08/2026)
+
+Em produção: `https://eitapromo.bf.dev.br` (Vercel, deploy automático a cada push no `main`). Repo: `github.com/bielfernandes-projects/eita-promo` (privado).
+
+**Shipped nesta sessão, além do MVP inicial:**
+- Login com senha + magic link, ordenação da Vitrine (padrão "Mais vendidos"), aba de Configurações, botões de compartilhamento direto (WhatsApp / Web Share API).
+- SMTP próprio (Resend) pro e-mail de acesso — o provedor padrão do Supabase tem limite de envio baixo demais pra tráfego pago.
+- Vercel Analytics ligado.
+- **Fase 1 (legal + Pixel + segurança da credencial)**: Termos de Uso e Política de Privacidade (`/termos`, `/privacidade` — conteúdo é rascunho informado por LGPD/CDC, **não é revisão jurídica**; falta preencher razão social/CNPJ real). Meta Pixel client-side (`src/lib/meta/pixel.tsx`) + evento `Purchase` server-side via Conversions API (`src/lib/meta/conversions.ts`, disparado no webhook da Cakto) — ambos em no-op até `NEXT_PUBLIC_META_PIXEL_ID` / `META_PIXEL_ID` / `META_CONVERSIONS_API_TOKEN` serem configurados. Credencial Shopee do usuário criptografada (item acima).
+- **Fase 2 (robustez técnica)**:
+  - Retry com backoff exponencial em `queryShopee` (único ponto por onde toda chamada à Shopee passa — cobre tanto o cron diário quanto a geração de link pessoal) pra falha transitória (5xx/429); erro definitivo (4xx, credencial ausente) continua falhando na hora.
+  - Rate limit de tentativas de login: `signInWithPassword` foi movido pra uma server action (`src/app/login/acoes.ts`) porque a chamada direta do browser pro Supabase nunca passava pelo nosso servidor — um limite no `proxy.ts` teria sido decorativo. Limitador em memória por instância (`src/lib/seguranca/limite-tentativas.ts`), 5 tentativas/5min por e-mail; `/auth/confirm` limitado por IP. **Ceiling conhecido**: não é distribuído (não sobrevive a cold start nem se compartilha entre instâncias/regiões da Vercel) — upgrade pra Postgres (Supabase, já é dependência) ou Upstash Redis quando o tráfego justificar.
+  - Testes automatizados (Vitest, `npm run test`): gerador de copy (invariante de não-repetição consecutiva em 300 gerações) e validação de assinatura/payload do webhook da Cakto — os dois pontos que, se quebrarem, ninguém compra ou ninguém recebe acesso.
+  - Monitoramento de erro: decidido **não** adicionar Sentry por ora — a Vercel já expõe erros de runtime agregados (usei `get_runtime_errors` da integração Vercel pra confirmar que funciona, zero erros nas últimas 24h). Sentry fica como upgrade quando volume de tráfego justificar alerta proativo (push) em vez de consulta sob demanda.
+
+## Roadmap combinado com o dono do produto (ordem de execução)
+
+1. ~~Fase 1 — Legal + Pixel + segurança~~ ✅
+2. ~~Fase 2 — Robustez técnica~~ ✅
+3. **Fase 3 — Templates de imagem no Canva**, deixando selecionável pro usuário dentro do app (troca dos 3 templates HTML/CSS atuais, ou complementando).
+4. **Fase 4 — Logo simples** pro produto (hoje é só o texto "EitaPromo" + ícone gerado via `next/og`).
+5. **Fase 5 — Copy & Criativo**: copy nova de vendas pra landing (a atual nunca rodou com tráfego real), variações de anúncio, roteiros de Reels pro @homidapromo (Instagram de achadinhos do dono do produto).
+6. **Fase 6 — Campanha paga**: Meta Ads, verba de teste R$20-50/dia por 1-2 semanas antes de escalar. Business Manager já existe; falta o Pixel ativo no site (depende das env vars da Fase 1). Execução: o agente opera o Ads Manager pelo navegador com o dono do produto acompanhando — nenhum clique que comprometa orçamento é feito sem confirmação em tempo real.
+
+Meta: primeiros R$10k de faturamento na Cakto.

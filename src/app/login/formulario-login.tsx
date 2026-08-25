@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { entrarComSenha as entrarComSenhaAction } from "./acoes";
 
 type Modo = "senha" | "link";
 
@@ -24,14 +25,11 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
   const [linkEnviado, setLinkEnviado] = useState(false);
 
   async function entrarComSenha() {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
-    if (error) {
-      setErro(
-        error.message.includes("Invalid login credentials")
-          ? "E-mail ou senha incorretos."
-          : error.message,
-      );
+    // Server action, nao chamada direta pro Supabase: e o unico jeito de o
+    // rate limit de tentativas realmente ver essa requisicao.
+    const resultado = await entrarComSenhaAction(email, senha);
+    if (!resultado.ok) {
+      setErro(resultado.erro ?? "Não deu pra entrar.");
       return;
     }
     // refresh() faz o servidor reler o cookie recém-gravado antes de navegar.

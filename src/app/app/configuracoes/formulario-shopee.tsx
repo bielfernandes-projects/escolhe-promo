@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { salvarCredencialShopee } from "./acoes";
 
 type Props = { appIdSalvo: string | null };
 
@@ -24,19 +24,12 @@ export function FormularioShopee({ appIdSalvo }: Props) {
     setCarregando(true);
     setMensagem(null);
 
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // Precisa ser server action: o App Secret e cifrado com uma chave que
+    // nunca pode chegar ao browser.
+    const resultado = await salvarCredencialShopee(appId, appSecret);
 
-    const { error } = await supabase.from("credenciais_afiliado").upsert({
-      user_id: user!.id,
-      shopee_app_id: appId,
-      shopee_app_secret: appSecret,
-    });
-
-    if (error) {
-      setMensagem({ tipo: "erro", texto: error.message });
+    if (!resultado.ok) {
+      setMensagem({ tipo: "erro", texto: resultado.erro ?? "Erro ao salvar." });
     } else {
       setMensagem({ tipo: "ok", texto: "Credenciais salvas." });
       setSalvo(appId);

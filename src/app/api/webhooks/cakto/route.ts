@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validarAssinaturaCakto, validarPayloadCakto } from "@/lib/cakto/validacao";
 import { temLifetimeDeal, temOrderBump } from "@/lib/cakto/tipos";
+import { dispararCompraMeta } from "@/lib/meta/conversions";
 
 const SECRET = process.env.CAKTO_WEBHOOK_SECRET;
 
@@ -171,6 +172,15 @@ export async function POST(request: NextRequest) {
       // A magic link pode ser disparada manualmente depois.
       console.warn(`[webhook] Falha ao gerar magic link:`, linkError);
     }
+
+    // Conversion API do Meta: nao bloqueia a resposta do webhook nem falha
+    // se der erro (metrica de anuncio nunca pode impedir a liberacao real).
+    dispararCompraMeta({
+      email: customer_email,
+      valor: payload.data.total_price,
+      moeda: payload.data.currency,
+      origem: request.nextUrl.origin,
+    });
 
     console.log(`[webhook] ✓ Processado order ${order_id} para ${customer_email}`);
     return NextResponse.json({ ok: true });

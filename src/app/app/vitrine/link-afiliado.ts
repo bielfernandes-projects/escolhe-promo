@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { queryShopee } from "@/lib/shopee/client";
+import { descriptografar } from "@/lib/seguranca/criptografia";
 
 /**
  * Gera um link de afiliado assinado com as credenciais do PROPRIO usuario
@@ -30,6 +31,7 @@ export async function linkAfiliadoPessoal(
   }
 
   try {
+    const appSecret = descriptografar(credencial.shopee_app_secret);
     const resultado = await queryShopee<{
       generateShortLink: { shortLink: string };
     }>(
@@ -37,7 +39,7 @@ export async function linkAfiliadoPessoal(
         generateShortLink(input: $input) { shortLink }
       }`,
       { input: { originUrl: produtoLinkOrigem } },
-      { appId: credencial.shopee_app_id, appSecret: credencial.shopee_app_secret },
+      { appId: credencial.shopee_app_id, appSecret },
     );
     return resultado.generateShortLink.shortLink;
   } catch (erro) {

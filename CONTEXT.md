@@ -22,10 +22,10 @@ O array `productCatIds` que a Shopee devolve para um Produto: os IDs numéricos 
 Conjunto de quatro slots (Abertura, Benefício, Urgência, Fechamento), cada um com um array de variações; o sorteio de uma variação por slot gera uma copy única.
 
 **Template Visual**:
-Um dos 3 a 5 layouts HTML/CSS usados para renderizar, no client, uma imagem de Feed ou Story com foto e preço do Produto selecionado.
+Um dos 3 a 5 layouts HTML/CSS usados para renderizar, no client, uma imagem de Feed ou Story com preço do Produto e uma foto — a do Produto por padrão, ou uma que o usuário enviou (fica só no navegador dele, não sobe pra lugar nenhum).
 
 **Double-Dip**:
-Quando o usuário da Vitrine não colou seu próprio link de afiliado, o clique no Produto usa o link de afiliado do dono do app em vez de ficar sem monetização.
+Ao abrir o modal de um Produto, o passo 1 é o botão "Abrir produto na Shopee", que leva pelo link de afiliado do dono do app — o usuário passa por esse link no caminho de pegar o próprio link de afiliado na Shopee. Se ele seguir sem colar um link próprio ("não tenho um link de afiliado"), a copy também sai com o link do dono. Nos dois casos o dono monetiza.
 
 **Lifetime Deal**:
 A oferta principal: acesso vitalício ao app por um pagamento único (R$ 47–67).
@@ -34,4 +34,7 @@ A oferta principal: acesso vitalício ao app por um pagamento único (R$ 47–67
 Oferta complementar adicionada no checkout com um clique, sem interromper a compra — no MVP, o e-book "Turbinar".
 
 **Integração de Afiliado Própria**:
-Recurso de backlog (fora do MVP) em que o usuário conecta as próprias credenciais da API de Afiliados Shopee para que o app gere automaticamente o link de afiliado dele a partir da URL do produto, em vez de ele colar um link já criado manualmente.
+Em Configurações o usuário salva App ID/Secret da própria conta Shopee (Secret criptografado em repouso). Serve de fallback do fluxo do modal: se ele clicar em "não tenho um link de afiliado", o app tenta gerar o link pessoal dele via `generateShortLink` a partir da URL do produto; sem credencial ou em caso de falha, cai no link do dono (Double-Dip). O caminho principal continua sendo o usuário colar o próprio link.
+
+**Gerar novos produtos**:
+Botão da Vitrine que avança uma página do catálogo do dia (48 Produtos por vez de ~700). É paginação client-side — não busca nada novo na Shopee. O catálogo em si só é reescrito pelo job diário.

@@ -53,7 +53,7 @@ Micro SaaS B2C que resolve a dor operacional de afiliados iniciantes da Shopee (
 - Vídeo tutorial embutido (GIFs ensinando a pegar links e recortar fotos da Shopee).
 - ~~**Integração de Afiliado Própria**~~ — **Implementado.** Em Configurações (`src/app/app/configuracoes/`), o usuário salva App ID/Secret da própria conta Shopee; `src/app/app/vitrine/link-afiliado.ts` gera o link pessoal via mutation `generateShortLink`, com fallback silencioso pro link da casa (Double-Dip) se não houver credencial ou a chamada falhar. O App Secret é criptografado em repouso (AES-256-GCM, `src/lib/seguranca/criptografia.ts`) — nunca passa em texto puro do browser pro banco, a escrita acontece via server action (`src/app/app/configuracoes/acoes.ts`).
 
-## Estado atual (25/08/2026)
+## Estado atual (31/08/2026)
 
 Em produção: `https://eitapromo.bf.dev.br` (Vercel, deploy automático a cada push no `main`). Repo: `github.com/bielfernandes-projects/eita-promo` (privado).
 
@@ -92,7 +92,7 @@ Ainda pendente da Fase 5 (marketing, não é código): variações de anúncio e
 2. ~~Fase 2 — Robustez técnica~~ ✅
 3. **Fase 3 — Templates de imagem no Canva**, deixando selecionável pro usuário dentro do app (troca dos 3 templates HTML/CSS atuais, ou complementando).
 4. **Fase 4 — Logo simples** pro produto (hoje é só o texto "EitaPromo" + ícone gerado via `next/og`).
-5. **Fase 5 — Copy & Criativo** (🔄 em andamento — ver "Sessão 31/08/2026"): melhorias de app/funil feitas; falta a landing rica + demo real (Bloco 4), variações de anúncio e roteiros de Reels pro @homidapromo.
+5. **Fase 5 — Copy & Criativo** (🔄 quase lá — ver "Sessão 31/08/2026"): melhorias de app/funil e a landing nova (com demo real do app) feitas e commitadas; falta só o material de anúncio (variações de copy e roteiros de Reels pro @homidapromo) e uma passada de olho na landing/funil no celular de verdade.
 6. **Fase 6 — Campanha paga**: verba de teste R$20-50/dia por 1-2 semanas antes de escalar, pelo Instagram **@homidapromo**. Execução: o agente opera o gerenciador de anúncios pelo navegador com o dono do produto acompanhando — nenhum clique que comprometa orçamento é feito sem confirmação em tempo real. Ver "Integração Meta Ads" abaixo pro caminho de acesso (conta de anúncios pessoal está desativada).
 
 Meta: primeiros R$10k de faturamento na Cakto.

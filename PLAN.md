@@ -80,8 +80,11 @@ Feito e verificado end-to-end (commits `7fb38c8`, `9ce3b33`, próximo):
 
 Ponto 8 — **enviar a própria foto** (`commit 8318d13`): a API da Shopee só dá uma imagem por produto (`productOfferV2.imageUrl`; introspecção do tipo confirma que não há galeria, e `getItemFeedData`/`listItemFeeds` são de conteúdo, não de produto). Em vez de escolher entre várias, o usuário manda a própria foto na aba Imagem — 100% client-side (object URL, nunca sobe, revogado ao trocar/fechar). `renderTemplate` ganhou 3º arg opcional de `imagemUrl`. Verificado no browser: html2canvas captura o object URL sem tainting.
 
-Ainda pendente da lista dos 9 pontos:
-- **Landing mais rica (ponto 1)** e **trocar a demo do celular por conteúdo real (ponto 2)** — Bloco 4 do plano. A landing hoje tem só 4 seções de conteúdo + a demo de celular é placeholder (skeleton). Falta: pra-quem-é, comparação com/sem, quebra de objeções, detalhe da oferta, garantia, FAQ, nota do fundador, slot de depoimentos, CTA fixo no mobile; e screenshots reais do app no lugar do `TelefoneDemo`. Sem prova social fabricada (o dono não tem depoimento/nº de usuários ainda). Screenshots reais dependem de conseguir viewport mobile — fazer em sessão dedicada com o skill de design.
+Pontos 1 e 2 — **landing reconstruída** (`commit 2820f8d`): herói sem eyebrow com composição do app real (`src/app/_landing/app-showcase.tsx`, screenshots em `public/demo/*.jpg`, sem mockup skeleton); seções novas — "Três toques" (sequência), "É pra você se…", "A diferença" (na unha × com o Eita Promo), "O que entra no acesso", FAQ/objeções em `<details>`, "Garantia de 7 dias", nota de quem fez; barra de compra fixa no mobile. Garantia definida com o dono: **7 dias incondicional**. Nota do fundador com foco no público (não "sou afiliado"). Order bump do e-book **não** aparece na landing. Sem prova social fabricada — há espaço pra depoimentos entrarem depois.
+Verificado no browser (desktop): herói, "A diferença", "O que entra", FAQ (abre/fecha), garantia, CTA final. **Não verificado**: layout mobile real (a ferramenta de browser desta sessão não redimensiona o viewport) — a barra fixa e o empilhamento dos cards do showcase precisam de um olhar no celular.
+Correção de bug junto: `.lp-reveal` terminava o fade em `cover 25%`, deixando seções curtas invisíveis quando ocupavam o centro da tela; agora termina em `entry 90%`.
+
+Ainda pendente da Fase 5 (marketing, não é código): variações de anúncio e roteiros de Reels pro @homidapromo.
 
 ## Roadmap combinado com o dono do produto (ordem de execução)
 

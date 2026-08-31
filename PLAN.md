@@ -68,28 +68,70 @@ Em produção: `https://eitapromo.bf.dev.br` (Vercel, deploy automático a cada 
   - Testes automatizados (Vitest, `npm run test`): gerador de copy (invariante de não-repetição consecutiva em 300 gerações) e validação de assinatura/payload do webhook da Cakto — os dois pontos que, se quebrarem, ninguém compra ou ninguém recebe acesso.
   - Monitoramento de erro: decidido **não** adicionar Sentry por ora — a Vercel já expõe erros de runtime agregados (usei `get_runtime_errors` da integração Vercel pra confirmar que funciona, zero erros nas últimas 24h). Sentry fica como upgrade quando volume de tráfego justificar alerta proativo (push) em vez de consulta sob demanda.
 
+## Sessão 31/08/2026 — melhorias pré-tráfego (9 pontos do dono)
+
+Feito e verificado end-to-end (commits `7fb38c8`, `9ce3b33`, próximo):
+- **Navegação da área logada**: link "Vitrine" no cabeçalho compartilhado (`src/app/app/cabecalho.tsx`) com estado ativo + "Voltar pra Vitrine" no topo de Configurações. Toda página sob `/app` tem como voltar.
+- **Scroll dos filtros no mobile**: o trilho de chips (`src/app/app/vitrine/vitrine-client.tsx`) usava `mx-auto` num `w-max` dentro de um scroll container — a margem automática centralizava e deixava os primeiros chips inalcançáveis. Removido. (Fix por inspeção; não deu pra confirmar em viewport mobile real nesta sessão — o navegador de teste não redimensiona o viewport.)
+- **Fluxo do modal em 3 passos** (`src/app/app/vitrine/modal-gerador.tsx`): (1) "Abrir produto na Shopee" pelo `offerLink` da casa (Double-Dip — mais uma via de receita), (2) campo pra colar o link de afiliado do próprio cliente, com escape hatch "não tenho link", (3) "Gerar copy" só libera com link válido; preview virou `<textarea>` editável. Testado no browser com sessão real.
+- **Legenda de Instagram** na aba Imagem: reusa o gerador de copy no modo `instagram`, editável, com "Copiar legenda"; também vai no `text` do `navigator.share`. Testado.
+- **Catálogo ≥50 por nicho**: `src/lib/produtos/sincronizar.ts` (`sincronizarCatalogo`) — feed global + top-up por categoria da Shopee (`NICHO_TO_SHOPEE_CATS` em `niches.ts`) até 50 por nicho. `salvarProdutos` virou reescrita completa (carimba `atualizado_em`, apaga o que não veio) pra o upsert não acumular e reafinar os nichos magros. Rodei o cron real: 691 produtos, todos os 9 nichos ≥50 (Casa 50, Cozinha 70, Beleza 81, Eletrônicos 96, Moda 66, Bebê 83, Pet 63, Esporte 80, Outros 102), ~14s. `maxDuration` do cron → 600.
+- **Botão "Gerar novos produtos"**: `regerarCatalogo()` server action (`src/app/app/vitrine/acoes.ts`), allowlist de e-mail em `src/lib/admin.ts` (`ADMIN_EMAILS`, default `gabriel.fernandeshw@gmail.com`), nunca reexpõe `CRON_SECRET`. `BotaoRegerar` no header da Vitrine e no estado vazio, só pro dono (confirmado escondido pra não-admin).
+
+Descartado:
+- **Escolher qual imagem do produto** (ponto 8): spike na API confirmou que `productOfferV2` expõe só `imageUrl` (uma). Introspecção do tipo `ProductOfferV2` lista os campos — não há galeria, e as queries de feed (`getItemFeedData`, `listItemFeeds`) são de conteúdo, não de produto. Alternativa de backlog: deixar o usuário **enviar a própria foto** (upload client-side, sem API).
+
+Ainda pendente da lista dos 9 pontos:
+- **Landing mais rica (ponto 1)** e **trocar a demo do celular por conteúdo real (ponto 2)** — Bloco 4 do plano. A landing hoje tem só 4 seções de conteúdo + a demo de celular é placeholder (skeleton). Falta: pra-quem-é, comparação com/sem, quebra de objeções, detalhe da oferta, garantia, FAQ, nota do fundador, slot de depoimentos, CTA fixo no mobile; e screenshots reais do app no lugar do `TelefoneDemo`. Sem prova social fabricada (o dono não tem depoimento/nº de usuários ainda). Screenshots reais dependem de conseguir viewport mobile — fazer em sessão dedicada com o skill de design.
+
 ## Roadmap combinado com o dono do produto (ordem de execução)
 
 1. ~~Fase 1 — Legal + Pixel + segurança~~ ✅
 2. ~~Fase 2 — Robustez técnica~~ ✅
 3. **Fase 3 — Templates de imagem no Canva**, deixando selecionável pro usuário dentro do app (troca dos 3 templates HTML/CSS atuais, ou complementando).
 4. **Fase 4 — Logo simples** pro produto (hoje é só o texto "EitaPromo" + ícone gerado via `next/og`).
-5. **Fase 5 — Copy & Criativo**: copy nova de vendas pra landing (a atual nunca rodou com tráfego real), variações de anúncio, roteiros de Reels pro @homidapromo (Instagram de achadinhos do dono do produto).
-6. **Fase 6 — Campanha paga**: Meta Ads, verba de teste R$20-50/dia por 1-2 semanas antes de escalar. Business Manager já existe; falta o Pixel ativo no site (depende das env vars da Fase 1). Execução: o agente opera o Ads Manager pelo navegador com o dono do produto acompanhando — nenhum clique que comprometa orçamento é feito sem confirmação em tempo real.
+5. **Fase 5 — Copy & Criativo** (🔄 em andamento — ver "Sessão 31/08/2026"): melhorias de app/funil feitas; falta a landing rica + demo real (Bloco 4), variações de anúncio e roteiros de Reels pro @homidapromo.
+6. **Fase 6 — Campanha paga**: verba de teste R$20-50/dia por 1-2 semanas antes de escalar, pelo Instagram **@homidapromo**. Execução: o agente opera o gerenciador de anúncios pelo navegador com o dono do produto acompanhando — nenhum clique que comprometa orçamento é feito sem confirmação em tempo real. Ver "Integração Meta Ads" abaixo pro caminho de acesso (conta de anúncios pessoal está desativada).
 
 Meta: primeiros R$10k de faturamento na Cakto.
 
 ## Integração Meta Ads
 
+- **Conta de anúncios pessoal (`108278922599080`) está desativada
+  permanentemente** — restrição "Integridade da conta e identidade
+  autêntica", confirmada pela IA do Meta como decisão definitiva, sem opção
+  de recurso. Não insistir nessa conta.
+- **Caminho pra Fase 6**: usar o gerenciador de anúncios **via Instagram
+  @homidapromo**, não pela conta pessoal restrita. Duas formas, em ordem de
+  preferência:
+  1. **Gerenciador de Anúncios acessado a partir do login do Instagram**
+     (não o botão "Turbinar" simplificado) — dá acesso às mesmas opções
+     completas do Ads Manager normal (objetivos, segmentação, orçamento por
+     conjunto de anúncios etc.), só que a conta de anúncios usada é a
+     vinculada ao Instagram, não a pessoal desativada.
+  2. **Botão "Turbinar publicação"** direto no app do Instagram — funciona
+     (testado, cria/usa conta de anúncios própria do perfil profissional,
+     não passa pela conta desativada), mas só oferece objetivos
+     simplificados (mais mensagens, mais visitas ao perfil, mais cliques no
+     link) — sem otimização por evento de conversão.
+- Pixel ID `1632607598300164` configurado (local + Vercel produção) — o
+  Pixel client-side já está ativo em produção e segue coletando dados
+  independente de qual conta de anúncios roda a campanha, porque pertence
+  ao site, não à conta restrita.
+- **Conversions API (evento `Purchase` server-side) — pausada, não
+  bloqueante.** Não é necessária pro Turbinar nem pro Ads Manager via
+  Instagram, então não vale continuar insistindo agora. Se retomar depois:
+  o token gerado pela tela de Conversions API do Gerenciador de Eventos só
+  vem com escopo `read_ads_dataset_quality` (diagnóstico, não serve pra
+  enviar evento); o caminho certo é criar um usuário do sistema em
+  Configurações do Negócio → Usuários → Usuários do sistema, atribuir o
+  pixel a ele pela **própria página do pixel** (não pela tela "adicionar
+  ativos" do usuário — fica vazia com pixel sem pessoas atribuídas), criar
+  um app qualquer no portfólio (Contas → Apps → Adicionar → Criar novo app,
+  sem precisar de revisão), e só então gerar o token do usuário do sistema
+  com escopo `ads_management` + `business_management`.
 - MCP oficial adicionado (`https://mcp.facebook.com/ads`, confirmado real via
   DNS + resposta HTTP, não é um chute) — carrega só depois de reconectar a
   sessão, e requer OAuth com o login do próprio dono do produto (nenhuma
-  senha passa pelo agente).
-- Pixel ID `1632607598300164` configurado (local + Vercel produção) — o
-  Pixel client-side já está ativo em produção.
-- O token que veio junto (`SYSTEM_USER`, nunca expira) tem só o escopo
-  `read_ads_dataset_quality` — serve pra diagnóstico, não pra enviar evento
-  (Conversions API) nem gerenciar campanha. Ainda falta um token com escopo
-  de `ads_management`/`business_management`, gerado em Gerenciador de
-  Eventos → Fontes de Dados → [pixel] → Configurações → Conversions API →
-  "Gerar token de acesso" (é um botão diferente do token geral da API).
+  senha passa pelo agente). Como a conta pessoal está desativada, checar na
+  hora do OAuth se a autenticação também precisa ser feita pelo Instagram.

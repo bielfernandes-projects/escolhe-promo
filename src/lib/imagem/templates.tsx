@@ -1,290 +1,366 @@
 /**
- * Template Visual: layouts HTML/CSS pra gerar imagens de Feed ou Story.
- * Cada template é um componente React puro — sem hooks, sem network, sem
- * interatividade. Renderizados numa div oculta e capturados via html2canvas.
+ * Template Visual: layouts pra gerar imagens de Feed/Story no estilo
+ * "achadinho" (preço gritado, cor forte, urgência). São renderizados pelo
+ * satori/next-og no servidor (rota /api/imagem), não no DOM.
+ *
+ * Regras do satori: todo elemento com mais de um filho precisa de
+ * `display: flex`; sem grid; `backgroundImage` com url() e linear-gradient ok;
+ * boxShadow, borderRadius, transform, border ok. Fontes: "Anton" (display) e
+ * "Inter" (600/700).
  */
+/* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text -- satori renderiza <img>; não é DOM */
 import React from "react";
-import type { ReactNode } from "react";
-import type { Produto } from "@/lib/produtos/tipos";
+import type { ReactElement } from "react";
 
-export type TemplateId = "feed-simples" | "story-urgencia" | "feed-destaque";
+export type TemplateId = "feed-oferta" | "feed-cartao" | "story-achadinho";
 
 export type TemplateInfo = {
   nome: string;
-  /** Só pra mostrar na tela: "1:1" nao e CSS valido. */
+  /** Só pra mostrar na tela. */
   rotulo: string;
-  /** Sintaxe CSS de verdade — `aspect-ratio` exige barra, nao dois-pontos. */
-  aspecto: string;
-  /** Tamanho real em que o template e capturado. O preview escala a partir daqui. */
   largura: number;
   altura: number;
 };
 
 export const TEMPLATES: Record<TemplateId, TemplateInfo> = {
-  "feed-simples": {
-    nome: "Feed Simples",
-    rotulo: "1:1",
-    aspecto: "1 / 1",
-    largura: 1080,
-    altura: 1080,
-  },
-  "story-urgencia": {
-    nome: "Story Urgência",
-    rotulo: "9:16",
-    aspecto: "9 / 16",
+  "feed-oferta": { nome: "Oferta", rotulo: "Feed 4:5", largura: 1080, altura: 1350 },
+  "feed-cartao": { nome: "Cartão", rotulo: "Feed 4:5", largura: 1080, altura: 1350 },
+  "story-achadinho": {
+    nome: "Achadinho",
+    rotulo: "Story 9:16",
     largura: 1080,
     altura: 1920,
   },
-  "feed-destaque": {
-    nome: "Feed Destaque",
-    rotulo: "1:1",
-    aspecto: "1 / 1",
-    largura: 1080,
-    altura: 1080,
-  },
 };
 
-type TemplateProps = {
-  produto: Produto;
-  /** Sobrescreve a foto do produto — ex.: uma foto que o usuario mandou. */
-  imagemUrl?: string;
-};
+const LARANJA = "#ee4d2d";
+const LARANJA_ESCURO = "#c43a1e";
+const AMARELO = "#ffd400";
+const TINTA = "#18181b";
 
-/**
- * Feed 1:1 — foto em cima, preço e CTA embaixo.
- * O fundo branco vai virar canvas e pode ser salvo direto do gerador.
- */
-export const FeedSimples: React.FC<TemplateProps> = ({ produto, imagemUrl }) => (
-  <div
-    style={{
-      width: 1080,
-      height: 1080,
-      backgroundColor: "#fff",
-      display: "flex",
-      flexDirection: "column",
-      padding: 0,
-      fontSize: "48px",
-      fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-      fontWeight: 600,
-      color: "#000",
-    }}
-  >
-    {/* Imagem: 80% da altura */}
-    <div
-      style={{
-        flex: 1,
-        backgroundImage: `url(${imagemUrl ?? produto.imagemUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    />
+export type DadosImagem = { nome: string; preco: number };
 
-    {/* Footer: 20% da altura, com preço e emoji de aproveita */}
-    <div
-      style={{
-        height: "20%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 40px",
-        backgroundColor: "#f5f5f5",
-      }}
-    >
-      <div style={{ fontSize: "56px", color: "#e74c3c", fontWeight: 700 }}>
-        {produto.preco.toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        })}
-      </div>
-      <div style={{ fontSize: "72px" }}>🛍️</div>
+function fmtPreco(valor: number): string {
+  return `R$ ${valor.toFixed(2).replace(".", ",")}`;
+}
+
+function encurtar(nome: string, max = 52): string {
+  if (nome.length <= max) return nome;
+  const corte = nome.slice(0, max);
+  const esp = corte.lastIndexOf(" ");
+  return `${(esp > 24 ? corte.slice(0, esp) : corte).trimEnd()}…`;
+}
+
+/** Preço numa fontSize só, fonte Anton. */
+function Preco({ valor, cor, tamanho }: { valor: number; cor: string; tamanho: number }) {
+  return (
+    <div style={{ fontFamily: "Anton", fontSize: tamanho, lineHeight: 1, color: cor }}>
+      {fmtPreco(valor)}
     </div>
-  </div>
-);
+  );
+}
 
 /**
- * Story 9:16 — foto grande, overlay com preço e "clica aqui".
- * Bom pra compartilhar em Stories, tem urgência visual.
+ * Direção A — "Oferta": foto em cima, faixa laranja gritando o preço, selo
+ * "CORRE" sobreposto na emenda.
  */
-export const StoryUrgencia: React.FC<TemplateProps> = ({ produto, imagemUrl }) => (
-  <div
-    style={{
-      width: 1080,
-      height: 1920,
-      backgroundColor: "#000",
-      display: "flex",
-      flexDirection: "column",
-      position: "relative",
-      fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-      overflow: "hidden",
-    }}
-  >
-    {/* Background image: full height */}
+function FeedOferta({ dados, foto }: { dados: DadosImagem; foto: string }) {
+  return (
     <div
       style={{
-        position: "absolute",
-        inset: 0,
-        backgroundImage: `url(${imagemUrl ?? produto.imagemUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    />
-
-    {/* Dark overlay: 30% opacity */}
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        backgroundColor: "rgba(0,0,0,0.3)",
-      }}
-    />
-
-    {/* Content: bottom half, white text */}
-    <div
-      style={{
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: "55%",
-        // Corte reto deixava uma emenda dura no meio da foto; o degrade
-        // funde o texto na imagem.
-        backgroundImage:
-          "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.88) 100%)",
+        width: 1080,
+        height: 1350,
         display: "flex",
         flexDirection: "column",
-        padding: "40px",
-        justifyContent: "flex-end",
-        color: "#fff",
+        backgroundColor: LARANJA,
+        fontFamily: "Inter",
+        position: "relative",
       }}
     >
-      <div style={{ fontSize: "40px", marginBottom: "20px", fontWeight: 700 }}>
-        ⚡ URGENTE!
-      </div>
-      <div style={{ fontSize: "56px", fontWeight: 700, marginBottom: "20px" }}>
-        {produto.preco.toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        })}
-      </div>
-      <div
-        style={{
-          fontSize: "32px",
-          fontWeight: 600,
-          backgroundColor: "#e74c3c",
-          padding: "12px 20px",
-          borderRadius: "8px",
-          textAlign: "center",
-        }}
-      >
-        🔗 Clica no link da bio
-      </div>
-    </div>
-  </div>
-);
+      <img src={foto} width={1080} height={620} style={{ objectFit: "cover" }} />
 
-/**
- * Feed 1:1 — destaque em card com sombra, bom pra carrossel.
- */
-export const FeedDestaque: React.FC<TemplateProps> = ({ produto, imagemUrl }) => (
-  <div
-    style={{
-      width: 1080,
-      height: 1080,
-      backgroundColor: "#f8f8f8",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "60px",
-      fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-    }}
-  >
-    {/* Card: white, rounded, with shadow */}
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        backgroundColor: "#fff",
-        borderRadius: "20px",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
-      }}
-    >
-      {/* Image: 60% */}
       <div
         style={{
-          flex: 0.6,
-          backgroundImage: `url(${imagemUrl ?? produto.imagemUrl})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
-
-      {/* Info: 40% */}
-      <div
-        style={{
-          flex: 0.4,
+          flex: 1,
           display: "flex",
           flexDirection: "column",
-          padding: "30px",
           justifyContent: "space-between",
+          padding: "56px 64px 56px",
         }}
       >
-        <div>
-          <div
-            style={{
-              fontSize: "32px",
-              fontWeight: 700,
-              color: "#e74c3c",
-              marginBottom: "10px",
-            }}
-          >
-            {produto.preco.toLocaleString("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            })}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ fontFamily: "Anton", fontSize: 44, color: AMARELO }}>
+            DE TUDO ISSO POR
           </div>
+          <Preco valor={dados.preco} cor="#fff" tamanho={240} />
           <div
             style={{
-              fontSize: "20px",
-              color: "#666",
-              fontWeight: 500,
+              marginTop: 24,
+              fontSize: 34,
+              fontWeight: 700,
+              color: "#fff",
+              lineHeight: 1.3,
             }}
           >
-            Comissão: R${(produto.comissao).toFixed(2)}
+            {encurtar(dados.nome, 60)}
           </div>
         </div>
 
         <div
           style={{
-            fontSize: "24px",
-            fontWeight: 700,
-            color: "#fff",
-            backgroundColor: "#27ae60",
-            padding: "12px",
-            borderRadius: "8px",
-            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "28px 0",
+            backgroundColor: "#fff",
+            borderRadius: 999,
+            fontFamily: "Anton",
+            fontSize: 46,
+            color: LARANJA,
           }}
         >
-          ✨ ACHADINHO
+          LINK NA DESCRIÇÃO
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          top: 470,
+          right: 56,
+          width: 290,
+          height: 290,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          borderRadius: 145,
+          border: "10px solid #fff",
+          backgroundColor: AMARELO,
+          transform: "rotate(-12deg)",
+          fontFamily: "Anton",
+          fontSize: 56,
+          color: LARANJA_ESCURO,
+          lineHeight: 1.05,
+          textAlign: "center",
+        }}
+      >
+        <div>CORRE</div>
+        <div>QUE ACABA</div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Direção B — "Cartão": fundo gradiente, foto flutuando num card branco, preço
+ * numa pílula, fita "SÓ HOJE" na diagonal.
+ */
+function FeedCartao({ dados, foto }: { dados: DadosImagem; foto: string }) {
+  return (
+    <div
+      style={{
+        width: 1080,
+        height: 1350,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundImage: `linear-gradient(160deg, ${AMARELO} 0%, ${LARANJA} 100%)`,
+        fontFamily: "Inter",
+        position: "relative",
+      }}
+    >
+      <div style={{ fontFamily: "Anton", fontSize: 68, color: "#fff", marginBottom: 32 }}>
+        ACHADINHO
+      </div>
+
+      <div
+        style={{
+          width: 900,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          backgroundColor: "#fff",
+          borderRadius: 48,
+          boxShadow: "0 30px 60px rgba(0,0,0,0.3)",
+          padding: "0 0 48px",
+        }}
+      >
+        <img
+          src={foto}
+          width={780}
+          height={700}
+          style={{ objectFit: "contain", marginTop: 24 }}
+        />
+        <div
+          style={{
+            fontSize: 32,
+            fontWeight: 600,
+            color: "#52525b",
+            textAlign: "center",
+            padding: "0 64px",
+            lineHeight: 1.3,
+          }}
+        >
+          {encurtar(dados.nome, 46)}
+        </div>
+        <div
+          style={{
+            marginTop: 28,
+            padding: "16px 72px",
+            display: "flex",
+            backgroundColor: LARANJA,
+            borderRadius: 999,
+          }}
+        >
+          <Preco valor={dados.preco} cor="#fff" tamanho={150} />
+        </div>
+      </div>
+
+      <div style={{ marginTop: 36, fontFamily: "Anton", fontSize: 50, color: "#fff" }}>
+        COMPRA PELO LINK
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          top: 130,
+          right: -90,
+          display: "flex",
+          padding: "20px 130px",
+          backgroundColor: TINTA,
+          color: "#fff",
+          fontFamily: "Anton",
+          fontSize: 46,
+          transform: "rotate(38deg)",
+        }}
+      >
+        SÓ HOJE
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Direção C — "Achadinho" (Story): foto full-bleed, etiqueta de preço girada,
+ * chamada pra ação no rodapé.
+ */
+function StoryAchadinho({ dados, foto }: { dados: DadosImagem; foto: string }) {
+  return (
+    <div
+      style={{
+        width: 1080,
+        height: 1920,
+        display: "flex",
+        backgroundColor: TINTA,
+        fontFamily: "Inter",
+        position: "relative",
+      }}
+    >
+      <img
+        src={foto}
+        width={1080}
+        height={1920}
+        style={{ objectFit: "cover", position: "absolute", top: 0, left: 0 }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: 1080,
+          height: 1920,
+          backgroundImage:
+            "linear-gradient(to bottom, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.12) 20%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.94) 76%)",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          top: 84,
+          left: 0,
+          width: 1080,
+          display: "flex",
+          justifyContent: "center",
+          fontFamily: "Anton",
+          fontSize: 52,
+          color: "#fff",
+        }}
+      >
+        ACHADINHO DO DIA
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          left: 80,
+          top: 1170,
+          width: 920,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            padding: "18px 60px",
+            backgroundColor: AMARELO,
+            borderRadius: 24,
+            boxShadow: "0 18px 44px rgba(0,0,0,0.45)",
+            transform: "rotate(-4deg)",
+          }}
+        >
+          <Preco valor={dados.preco} cor={LARANJA_ESCURO} tamanho={230} />
+        </div>
+
+        <div
+          style={{
+            marginTop: 44,
+            fontSize: 44,
+            fontWeight: 700,
+            color: "#fff",
+            lineHeight: 1.3,
+          }}
+        >
+          {encurtar(dados.nome, 62)}
+        </div>
+
+        <div
+          style={{
+            marginTop: 52,
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "34px 0",
+            backgroundColor: LARANJA,
+            borderRadius: 999,
+            fontFamily: "Anton",
+            fontSize: 58,
+            color: "#fff",
+          }}
+        >
+          CLICA NO LINK
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+}
 
 export function renderTemplate(
   templateId: TemplateId,
-  produto: Produto,
-  imagemUrl?: string,
-): ReactNode {
+  dados: DadosImagem,
+  foto: string,
+): ReactElement {
   switch (templateId) {
-    case "feed-simples":
-      return <FeedSimples produto={produto} imagemUrl={imagemUrl} />;
-    case "story-urgencia":
-      return <StoryUrgencia produto={produto} imagemUrl={imagemUrl} />;
-    case "feed-destaque":
-      return <FeedDestaque produto={produto} imagemUrl={imagemUrl} />;
+    case "feed-oferta":
+      return <FeedOferta dados={dados} foto={foto} />;
+    case "feed-cartao":
+      return <FeedCartao dados={dados} foto={foto} />;
+    case "story-achadinho":
+      return <StoryAchadinho dados={dados} foto={foto} />;
   }
 }

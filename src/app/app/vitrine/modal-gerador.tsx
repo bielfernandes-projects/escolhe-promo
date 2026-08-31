@@ -39,16 +39,16 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
   const [legenda, setLegenda] = useState("");
 
   // Foto propria opcional pra imagem (a API da Shopee so da uma foto por
-  // produto). Object URL — o efeito revoga a anterior sempre que troca e a
-  // ultima quando o modal fecha.
+  // produto). Guardada como data URI: serve tanto pro preview quanto pra
+  // mandar pra rota que monta a imagem.
   const [fotoPropria, setFotoPropria] = useState<string | null>(null);
-  useEffect(() => {
-    if (!fotoPropria) return;
-    return () => URL.revokeObjectURL(fotoPropria);
-  }, [fotoPropria]);
 
   function escolherFoto(arquivo: File | undefined) {
-    if (arquivo) setFotoPropria(URL.createObjectURL(arquivo));
+    if (!arquivo) return;
+    const reader = new FileReader();
+    reader.onload = () =>
+      setFotoPropria(typeof reader.result === "string" ? reader.result : null);
+    reader.readAsDataURL(arquivo);
   }
 
   // Comeca com o link da casa (Double-Dip) e troca pro pessoal se o usuario
@@ -62,7 +62,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
     });
   }, [produto.produtoLink]);
 
-  const { refTemplate, templateAtual, setTemplateAtual, estado, erro, gerar } =
+  const { templateAtual, setTemplateAtual, estado, erro, gerar } =
     useGeradorImagem(produto);
 
   const info = TEMPLATES[templateAtual];
@@ -342,8 +342,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                 </div>
                 {fotoPropria && (
                   <p className="text-xs text-tinta-fraca">
-                    Sua foto fica só no seu aparelho — não subimos pra lugar
-                    nenhum.
+                    Sua foto é usada só pra montar a imagem e não fica guardada.
                   </p>
                 )}
               </div>
@@ -361,7 +360,11 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                       transformOrigin: "top left",
                     }}
                   >
-                    {renderTemplate(templateAtual, produto, fotoPropria ?? undefined)}
+                    {renderTemplate(
+                      templateAtual,
+                      { nome: produto.nome, preco: produto.preco },
+                      fotoPropria ?? produto.imagemUrl,
+                    )}
                   </div>
                 </div>
               </div>
@@ -419,7 +422,12 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
               )}
 
               <button
-                onClick={() => gerar("compartilhar", legenda || undefined)}
+                onClick={() =>
+                  gerar("compartilhar", {
+                    legenda: legenda || undefined,
+                    foto: fotoPropria ?? undefined,
+                  })
+                }
                 disabled={estado === "capturando"}
                 className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-60"
               >
@@ -430,7 +438,9 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                     : "Compartilhar imagem 📸"}
               </button>
               <button
-                onClick={() => gerar("baixar")}
+                onClick={() =>
+                  gerar("baixar", { foto: fotoPropria ?? undefined })
+                }
                 disabled={estado === "capturando"}
                 className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5 disabled:opacity-60"
               >
@@ -439,23 +449,6 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
             </div>
           )}
         </div>
-      </div>
-
-      {/*
-        Alvo real da captura, em tamanho natural. Fica fora da tela em vez de
-        display:none: o html2canvas nao consegue capturar elemento escondido —
-        sairia uma imagem em branco.
-      */}
-      <div
-        aria-hidden
-        style={{
-          position: "fixed",
-          top: 0,
-          left: "-10000px",
-          pointerEvents: "none",
-        }}
-      >
-        <div ref={refTemplate}>{renderTemplate(templateAtual, produto, fotoPropria ?? undefined)}</div>
       </div>
     </div>
   );

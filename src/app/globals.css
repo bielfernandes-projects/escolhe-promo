@@ -1,6 +1,19 @@
 @import "tailwindcss";
 
 /*
+ * Fonte display dos Templates Visuais (o "preço gritado" do achadinho). Aqui
+ * só serve pro preview no modal; a imagem final é montada pelo satori na rota
+ * /api/imagem, que carrega a fonte por conta própria.
+ */
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/anton.woff") format("woff");
+}
+
+/*
  * A Geist é carregada no layout como variável CSS. Antes havia um
  * `font-family: Arial` fixo no body que sobrescrevia tudo — o app inteiro
  * renderizava em Arial e a fonte baixada nunca aparecia.

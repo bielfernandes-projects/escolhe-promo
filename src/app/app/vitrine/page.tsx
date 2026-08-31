@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { ehAdmin } from "@/lib/admin";
 import { listarProdutos } from "@/lib/produtos/repositorio";
 import { VitrineClient } from "./vitrine-client";
-import { BotaoRegerar } from "./botao-regerar";
 
 export const metadata = { title: "Vitrine do dia — Eita Promo" };
 
@@ -13,13 +10,7 @@ export const metadata = { title: "Vitrine do dia — Eita Promo" };
  * o que arrastava o app secret pro bundle e falhava sempre.
  */
 export default async function VitrinePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const podeRegerar = ehAdmin(user?.email);
-
-  const produtos = await listarProdutos(700);
+  const produtos = await listarProdutos(800);
 
   if (produtos.length === 0) {
     return (
@@ -36,14 +27,9 @@ export default async function VitrinePage() {
         >
           Voltar ao início
         </Link>
-        {podeRegerar && (
-          <div className="mt-6 flex justify-center">
-            <BotaoRegerar />
-          </div>
-        )}
       </main>
     );
   }
 
-  return <VitrineClient produtos={produtos} podeRegerar={podeRegerar} />;
+  return <VitrineClient produtos={produtos} />;
 }

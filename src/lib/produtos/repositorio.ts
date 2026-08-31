@@ -101,14 +101,14 @@ export async function salvarProdutos(produtos: Produto[]): Promise<number> {
     throw new Error(`Nao deu pra gravar a Vitrine: ${error.message}`);
   }
 
-  // Reescrita completa: o que nao foi tocado nesta sincronizacao sai da
-  // Vitrine. Sem isso o upsert so acumula e, semana apos semana, os nichos
-  // magros voltam a sumir porque a leitura corta no top-N por comissao.
-  const cutoff = new Date(agora.getTime() - 60 * 60 * 1000).toISOString();
+  // Reescrita completa: todo produto deste lote ficou com atualizado_em ===
+  // carimbo (o mesmo instante). Apaga qualquer linha com outro carimbo — sao
+  // sobras de sincronizacoes anteriores. Sem isso o upsert so acumula e, com o
+  // tempo, os nichos magros somem porque a leitura corta no top-N por comissao.
   const { error: erroLimpeza } = await supabase
     .from("produtos")
     .delete()
-    .lt("atualizado_em", cutoff);
+    .neq("atualizado_em", carimbo);
 
   if (erroLimpeza) {
     throw new Error(`Nao deu pra limpar a Vitrine: ${erroLimpeza.message}`);

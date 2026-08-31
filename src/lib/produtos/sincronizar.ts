@@ -5,7 +5,12 @@ import { NICHO_TO_SHOPEE_CATS, type Nicho } from "@/lib/shopee/niches";
 import { salvarProdutos } from "./repositorio";
 import type { Produto } from "./tipos";
 
-/** Quantos produtos cada Nicho deveria ter na Vitrine. */
+/**
+ * Quantos produtos cada Nicho deveria ter na Vitrine. A Vitrine mostra ~48
+ * por vez e o botao "Gerar novos produtos" sorteia recortes diferentes desse
+ * bolo. ~50 por nicho (≈700 no total) da variedade de sobra sem inchar o
+ * payload que vai pro navegador do cliente.
+ */
 const ALVO_POR_NICHO = 50;
 
 /**

@@ -12,20 +12,19 @@ import {
 } from "@/lib/produtos/ordenacao";
 import { CardProduto } from "./card-produto";
 import { ModalGerador } from "./modal-gerador";
-import { BotaoRegerar } from "./botao-regerar";
 
 type Filtro = Nicho | "todos";
 
-export function VitrineClient({
-  produtos,
-  podeRegerar = false,
-}: {
-  produtos: Produto[];
-  podeRegerar?: boolean;
-}) {
+/** Quantos cards a Vitrine mostra de uma vez. O catalogo do dia e maior. */
+const LIMITE = 48;
+
+export function VitrineClient({ produtos }: { produtos: Produto[] }) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [ordenacao, setOrdenacao] = useState<Ordenacao>(ORDENACAO_PADRAO);
   const [selecionado, setSelecionado] = useState<Produto | null>(null);
+  // "Gerar novos produtos" avanca uma pagina do catalogo do dia (que tem bem
+  // mais produto do que cabe na tela); ao chegar no fim, volta pro comeco.
+  const [pagina, setPagina] = useState(0);
 
   // So mostra chip de nicho que tem produto — filtro vazio frustra o usuario.
   const nichosComProduto = useMemo(() => {
@@ -33,13 +32,28 @@ export function VitrineClient({
     return NICHOS.filter((n) => presentes.has(n));
   }, [produtos]);
 
-  const visiveis = useMemo(() => {
+  const ordenados = useMemo(() => {
     const filtrados =
       filtro === "todos" ? produtos : produtos.filter((p) => p.nicho === filtro);
     return ordenarProdutos(filtrados, ordenacao);
   }, [produtos, filtro, ordenacao]);
 
+  const totalPaginas = Math.max(1, Math.ceil(ordenados.length / LIMITE));
+  const paginaAtual = pagina % totalPaginas;
+  const inicio = paginaAtual * LIMITE;
+  const visiveis = ordenados.slice(inicio, inicio + LIMITE);
+
   const chips: Filtro[] = ["todos", ...nichosComProduto];
+
+  function trocarFiltro(f: Filtro) {
+    setFiltro(f);
+    setPagina(0);
+  }
+
+  function trocarOrdenacao(o: Ordenacao) {
+    setOrdenacao(o);
+    setPagina(0);
+  }
 
   return (
     <main className="flex-1 pb-16">
@@ -51,30 +65,37 @@ export function VitrineClient({
                 Vitrine do dia
               </h1>
               <p className="mt-0.5 text-sm text-tinta-fraca">
-                {visiveis.length}{" "}
-                {visiveis.length === 1 ? "produto" : "produtos"} pra divulgar
-                hoje
+                {ordenados.length > LIMITE
+                  ? `Mostrando ${inicio + 1}–${inicio + visiveis.length} de ${ordenados.length} produtos`
+                  : `${ordenados.length} ${ordenados.length === 1 ? "produto" : "produtos"} pra divulgar hoje`}
               </p>
             </div>
 
-            <div className="flex shrink-0 flex-col items-end gap-2">
-              {podeRegerar && <BotaoRegerar />}
-              <label>
-                <span className="sr-only">Ordenar por</span>
-                <select
-                  value={ordenacao}
-                  onChange={(e) => setOrdenacao(e.target.value as Ordenacao)}
-                  className="rounded-lg border border-black/10 bg-superficie px-2.5 py-1.5 text-xs font-semibold text-tinta outline-none focus:border-marca-500 sm:px-3 sm:py-2 sm:text-sm"
-                >
-                  {OPCOES_ORDENACAO.map((opcao) => (
-                    <option key={opcao} value={opcao}>
-                      {ROTULOS_ORDENACAO[opcao]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            <label className="shrink-0">
+              <span className="sr-only">Ordenar por</span>
+              <select
+                value={ordenacao}
+                onChange={(e) => trocarOrdenacao(e.target.value as Ordenacao)}
+                className="rounded-lg border border-black/10 bg-superficie px-2.5 py-1.5 text-xs font-semibold text-tinta outline-none focus:border-marca-500 sm:px-3 sm:py-2 sm:text-sm"
+              >
+                {OPCOES_ORDENACAO.map((opcao) => (
+                  <option key={opcao} value={opcao}>
+                    {ROTULOS_ORDENACAO[opcao]}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
+
+          {ordenados.length > LIMITE && (
+            <button
+              onClick={() => setPagina((p) => p + 1)}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-marca-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800"
+            >
+              Gerar novos produtos
+              <span aria-hidden>↻</span>
+            </button>
+          )}
         </div>
 
         {/* Rolagem horizontal: no celular os 9 nichos nao cabem em linha.
@@ -86,7 +107,7 @@ export function VitrineClient({
             {chips.map((chip) => (
               <button
                 key={chip}
-                onClick={() => setFiltro(chip)}
+                onClick={() => trocarFiltro(chip)}
                 aria-pressed={filtro === chip}
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   filtro === chip
@@ -120,10 +141,7 @@ export function VitrineClient({
       </div>
 
       {selecionado && (
-        <ModalGerador
-          produto={selecionado}
-          onClose={() => setSelecionado(null)}
-        />
+        <ModalGerador produto={selecionado} onClose={() => setSelecionado(null)} />
       )}
     </main>
   );

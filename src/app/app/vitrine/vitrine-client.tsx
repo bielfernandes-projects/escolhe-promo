@@ -12,10 +12,17 @@ import {
 } from "@/lib/produtos/ordenacao";
 import { CardProduto } from "./card-produto";
 import { ModalGerador } from "./modal-gerador";
+import { BotaoRegerar } from "./botao-regerar";
 
 type Filtro = Nicho | "todos";
 
-export function VitrineClient({ produtos }: { produtos: Produto[] }) {
+export function VitrineClient({
+  produtos,
+  podeRegerar = false,
+}: {
+  produtos: Produto[];
+  podeRegerar?: boolean;
+}) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [ordenacao, setOrdenacao] = useState<Ordenacao>(ORDENACAO_PADRAO);
   const [selecionado, setSelecionado] = useState<Produto | null>(null);
@@ -50,20 +57,23 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
               </p>
             </div>
 
-            <label className="shrink-0">
-              <span className="sr-only">Ordenar por</span>
-              <select
-                value={ordenacao}
-                onChange={(e) => setOrdenacao(e.target.value as Ordenacao)}
-                className="rounded-lg border border-black/10 bg-superficie px-2.5 py-1.5 text-xs font-semibold text-tinta outline-none focus:border-marca-500 sm:px-3 sm:py-2 sm:text-sm"
-              >
-                {OPCOES_ORDENACAO.map((opcao) => (
-                  <option key={opcao} value={opcao}>
-                    {ROTULOS_ORDENACAO[opcao]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              {podeRegerar && <BotaoRegerar />}
+              <label>
+                <span className="sr-only">Ordenar por</span>
+                <select
+                  value={ordenacao}
+                  onChange={(e) => setOrdenacao(e.target.value as Ordenacao)}
+                  className="rounded-lg border border-black/10 bg-superficie px-2.5 py-1.5 text-xs font-semibold text-tinta outline-none focus:border-marca-500 sm:px-3 sm:py-2 sm:text-sm"
+                >
+                  {OPCOES_ORDENACAO.map((opcao) => (
+                    <option key={opcao} value={opcao}>
+                      {ROTULOS_ORDENACAO[opcao]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
         </div>
 

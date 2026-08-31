@@ -69,6 +69,25 @@ const CASA_DECORACAO_LEVEL2_TO_NICHO: Record<number, Nicho> = {
 };
 
 /**
+ * Inverso do mapa acima: por Nicho, as categorias raiz da Shopee que o
+ * alimentam. Usado pelo sync pra buscar `productOfferV2` por categoria e
+ * garantir fundo de catalogo em todo Nicho (o feed global sozinho enche so
+ * Casa/Cozinha). "Outros" fica de fora — vem do que sobra do feed global.
+ * Casa e Cozinha dividem a raiz 100636; a de-duplicacao por item_id no sync
+ * cuida da sobreposicao.
+ */
+export const NICHO_TO_SHOPEE_CATS: Record<Exclude<Nicho, "Outros">, number[]> = {
+  Casa: [CASA_DECORACAO_ROOT, 100010],
+  Cozinha: [CASA_DECORACAO_ROOT],
+  Beleza: [100630],
+  Eletrônicos: [100013, 100535, 100634, 100635, 100644],
+  Moda: [100011, 100012, 100016, 100017, 100532],
+  "Bebê & Infantil": [100632, 100633],
+  Pet: [100631],
+  "Esporte & Fitness": [100637],
+};
+
+/**
  * Resolves a product's Trilha de Categoria to a Nicho. Products whose category
  * we have not mapped land in "Outros" rather than being dropped, so the Vitrine
  * never silently loses inventory when Shopee adds a category.

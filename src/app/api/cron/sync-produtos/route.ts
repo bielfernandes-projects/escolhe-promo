@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { fetchProdutos } from "@/lib/shopee/products";
-import { salvarProdutos } from "@/lib/produtos/repositorio";
+import { sincronizarCatalogo } from "@/lib/produtos/sincronizar";
 
-/** Sincronizar 200 produtos leva mais que o padrao de rota comum. */
-export const maxDuration = 300;
+/** Buscar por categoria (varias chamadas a Shopee) leva mais que o padrao. */
+export const maxDuration = 600;
 
 /**
  * Job diario do catalogo: puxa da Shopee e regrava a tabela `produtos`.
@@ -29,8 +28,7 @@ export async function GET(request: NextRequest) {
   const comecou = Date.now();
 
   try {
-    const produtos = await fetchProdutos({ limit: 400 });
-    const gravados = await salvarProdutos(produtos);
+    const { gravados } = await sincronizarCatalogo();
 
     console.log(`[cron/sync-produtos] ${gravados} produtos gravados`);
 

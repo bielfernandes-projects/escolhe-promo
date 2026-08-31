@@ -19,6 +19,7 @@ type LinhaProduto = {
   nicho: Nicho;
   offer_link: string;
   produto_link: string;
+  atualizado_em: string;
 };
 
 /** O Postgres devolve numeric como string pra nao perder precisao. */
@@ -41,8 +42,9 @@ const deLinha = (linha: LinhaProduto): Produto => ({
   produtoLink: linha.produto_link,
 });
 
-const paraLinha = (produto: Produto): LinhaProduto => ({
+const paraLinha = (produto: Produto, quando: string): LinhaProduto => ({
   item_id: produto.itemId,
+  atualizado_em: quando,
   nome: produto.nome,
   // Sem re-hospedagem: o CDN da Shopee manda `access-control-allow-origin: *`,
   // entao o html2canvas consegue capturar a imagem direto da origem.
@@ -62,7 +64,7 @@ const paraLinha = (produto: Produto): LinhaProduto => ({
  * Le a Vitrine para o usuario logado. Passa pelo RLS: a policy
  * "Vitrine visivel para autenticados" so libera quem tem sessao.
  */
-export async function listarProdutos(limite = 200): Promise<Produto[]> {
+export async function listarProdutos(limite = 700): Promise<Produto[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("produtos")
@@ -85,12 +87,31 @@ export async function salvarProdutos(produtos: Produto[]): Promise<number> {
   if (produtos.length === 0) return 0;
 
   const supabase = createAdminClient();
+  const agora = new Date();
+  const carimbo = agora.toISOString();
+
   const { error } = await supabase
     .from("produtos")
-    .upsert(produtos.map(paraLinha), { onConflict: "item_id" });
+    .upsert(
+      produtos.map((p) => paraLinha(p, carimbo)),
+      { onConflict: "item_id" },
+    );
 
   if (error) {
     throw new Error(`Nao deu pra gravar a Vitrine: ${error.message}`);
+  }
+
+  // Reescrita completa: o que nao foi tocado nesta sincronizacao sai da
+  // Vitrine. Sem isso o upsert so acumula e, semana apos semana, os nichos
+  // magros voltam a sumir porque a leitura corta no top-N por comissao.
+  const cutoff = new Date(agora.getTime() - 60 * 60 * 1000).toISOString();
+  const { error: erroLimpeza } = await supabase
+    .from("produtos")
+    .delete()
+    .lt("atualizado_em", cutoff);
+
+  if (erroLimpeza) {
+    throw new Error(`Nao deu pra limpar a Vitrine: ${erroLimpeza.message}`);
   }
 
   return produtos.length;

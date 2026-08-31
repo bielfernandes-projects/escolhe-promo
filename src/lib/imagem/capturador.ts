@@ -58,7 +58,11 @@ export async function capturarImagem(
  * seja o usuario ter fechado a folha (ativacao expirada, etc.) — nunca estoura
  * o erro na cara do usuario, so entrega o arquivo do jeito que der.
  */
-export async function compartilharImagem(blob: Blob, nomeArquivo: string): Promise<void> {
+export async function compartilharImagem(
+  blob: Blob,
+  nomeArquivo: string,
+  legenda?: string,
+): Promise<void> {
   const arquivo = new File([blob], nomeArquivo, { type: "image/png" });
 
   if (!navigator.canShare?.({ files: [arquivo] })) {
@@ -67,7 +71,10 @@ export async function compartilharImagem(blob: Blob, nomeArquivo: string): Promi
   }
 
   try {
-    await navigator.share({ files: [arquivo] });
+    await navigator.share({
+      files: [arquivo],
+      ...(legenda ? { text: legenda } : {}),
+    });
   } catch (erro) {
     if (erro instanceof DOMException && erro.name === "AbortError") return;
     baixarViaLink(blob, nomeArquivo);

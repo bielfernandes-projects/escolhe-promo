@@ -14,7 +14,7 @@ export function useGeradorImagem(produto: Produto) {
   const [estado, setEstado] = useState<EstadoCaptura>("ocioso");
   const [erro, setErro] = useState<string | null>(null);
 
-  const gerar = useCallback(async (entrega: Entrega = "compartilhar") => {
+  const gerar = useCallback(async (entrega: Entrega = "compartilhar", legenda?: string) => {
     if (!refTemplate.current) {
       setErro("Template não encontrado (falha interna)");
       setEstado("erro");
@@ -28,7 +28,7 @@ export function useGeradorImagem(produto: Produto) {
       const blob = await capturarImagem(refTemplate.current);
       const nomeArquivo = `${produto.nome.slice(0, 30).replace(/\s+/g, "-")}-${Date.now()}.png`;
       await (entrega === "compartilhar"
-        ? compartilharImagem(blob, nomeArquivo)
+        ? compartilharImagem(blob, nomeArquivo, legenda)
         : baixarImagem(blob, nomeArquivo));
       setEstado("sucesso");
       setTimeout(() => setEstado("ocioso"), 2000);

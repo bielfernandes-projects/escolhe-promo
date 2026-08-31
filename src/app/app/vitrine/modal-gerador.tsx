@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Produto } from "@/lib/produtos/tipos";
-import { criarGeradorDeCopy, type Canal } from "@/lib/copy/gerador";
+import { criarGeradorDeCopy, gerarCopy, type Canal } from "@/lib/copy/gerador";
 import { TEMPLATES, renderTemplate, type TemplateId } from "@/lib/imagem/templates";
 import { useGeradorImagem } from "@/lib/imagem/useGerador";
 import { linkAfiliadoPessoal } from "./link-afiliado";
@@ -16,6 +16,11 @@ type ModalGeradorProps = {
 const PREVIEW_LARGURA_MAX = 240;
 const PREVIEW_ALTURA_MAX = 320;
 
+/** Aceita link cru da Shopee ou os encurtadores (shp.ee, s.shopee, shope.ee). */
+function pareceLinkShopee(valor: string): boolean {
+  return /shopee\.com\.br|shp\.ee|s\.shopee|shope\.ee/i.test(valor.trim());
+}
+
 export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
   const [aba, setAba] = useState<"copy" | "imagem">("copy");
 
@@ -23,6 +28,15 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
   const [copy, setCopy] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [gerador] = useState(() => criarGeradorDeCopy());
+
+  // Fluxo em 3 passos: o usuario abre o produto pelo link da casa (Double-Dip),
+  // pega o proprio link de afiliado la na Shopee, cola aqui, e so entao gera a
+  // copy. Quem nao tem link segue pelo escape hatch usando o link da casa.
+  const [meuLink, setMeuLink] = useState("");
+  const [usarLinkDaCasa, setUsarLinkDaCasa] = useState(false);
+
+  // Legenda pro Instagram na aba de imagem — some caption pra colar junto do post.
+  const [legenda, setLegenda] = useState("");
 
   // Comeca com o link da casa (Double-Dip) e troca pro pessoal se o usuario
   // tiver credenciais salvas — ver src/app/app/vitrine/link-afiliado.ts.
@@ -57,15 +71,33 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
     };
   }, [info]);
 
+  const linkValido = pareceLinkShopee(meuLink);
+  const linkParaCopy = usarLinkDaCasa ? linkAtivo : meuLink.trim();
+  const podeGerar = linkValido || usarLinkDaCasa;
+
+  function abrirProduto() {
+    window.open(produto.offerLink, "_blank", "noopener,noreferrer");
+  }
+
   function gerarCopyClick() {
-    setCopy(gerador.proxima(produto, { canal, linkAfiliado: linkAtivo }));
+    if (!podeGerar) return;
+    setCopy(gerador.proxima(produto, { canal, linkAfiliado: linkParaCopy }));
     setCopiado(false);
   }
 
-  async function copiarClick() {
-    if (!copy) return;
+  function gerarLegendaClick() {
+    setLegenda(
+      gerarCopy(produto, {
+        canal: "instagram",
+        linkAfiliado: linkParaCopy || linkAtivo,
+      }),
+    );
+  }
+
+  async function copiarTexto(texto: string) {
+    if (!texto) return;
     try {
-      await navigator.clipboard.writeText(copy);
+      await navigator.clipboard.writeText(texto);
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2000);
     } catch {
@@ -117,64 +149,141 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
           {aba === "copy" ? (
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="canal" className="block text-sm font-semibold">
-                  Onde você vai postar?
+            <div className="space-y-5">
+              {/* Passo 1 — abrir o produto pelo link da casa (Double-Dip). */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">
+                  <span className="text-marca-700">1.</span> Abra o produto na
+                  Shopee
+                </p>
+                <p className="text-xs text-tinta-fraca">
+                  Abra, escolha suas opções e copie o <strong>seu</strong> link
+                  de afiliado lá na Shopee.
+                </p>
+                <button
+                  onClick={abrirProduto}
+                  className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800"
+                >
+                  Abrir produto na Shopee 🛒
+                </button>
+              </div>
+
+              {/* Passo 2 — colar o link de afiliado do proprio usuario. */}
+              <div className="space-y-2">
+                <label htmlFor="meu-link" className="block text-sm font-semibold">
+                  <span className="text-marca-700">2.</span> Cole aqui o seu link
+                  de afiliado
                 </label>
+                <input
+                  id="meu-link"
+                  type="url"
+                  inputMode="url"
+                  value={meuLink}
+                  onChange={(e) => {
+                    setMeuLink(e.target.value);
+                    if (e.target.value) setUsarLinkDaCasa(false);
+                  }}
+                  placeholder="https://s.shopee.com.br/..."
+                  className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
+                />
+                {meuLink && !linkValido && (
+                  <p className="text-xs text-red-600">
+                    Isso não parece um link da Shopee. Confira e cole de novo.
+                  </p>
+                )}
+                {!usarLinkDaCasa ? (
+                  <button
+                    onClick={() => setUsarLinkDaCasa(true)}
+                    className="text-xs font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
+                  >
+                    não tenho um link de afiliado →
+                  </button>
+                ) : (
+                  <p className="text-xs text-tinta-fraca">
+                    Ok, a copy vai sair com um link genérico.{" "}
+                    <button
+                      onClick={() => setUsarLinkDaCasa(false)}
+                      className="font-semibold underline underline-offset-2 hover:text-marca-700"
+                    >
+                      colar meu link
+                    </button>
+                  </p>
+                )}
+              </div>
+
+              {/* Passo 3 — gerar, editar e copiar a copy. */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold">
+                  <span className="text-marca-700">3.</span> Gere a copy
+                </p>
                 <select
-                  id="canal"
+                  aria-label="Onde você vai postar?"
                   value={canal}
                   onChange={(e) => setCanal(e.target.value as Canal)}
-                  className="mt-1.5 w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
+                  className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
                 >
                   <option value="whatsapp">WhatsApp (com *negrito*)</option>
                   <option value="instagram">Instagram (sem negrito)</option>
                 </select>
-              </div>
 
-              <button
-                onClick={gerarCopyClick}
-                className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800"
-              >
-                {copy ? "Gerar outra copy ✨" : "Gerar copy ✨"}
-              </button>
+                <button
+                  onClick={gerarCopyClick}
+                  disabled={!podeGerar}
+                  className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-50"
+                >
+                  {copy ? "Gerar outra copy ✨" : "Gerar copy ✨"}
+                </button>
+                {!podeGerar && (
+                  <p className="text-xs text-tinta-fraca">
+                    Cole o seu link no passo 2 pra liberar.
+                  </p>
+                )}
 
-              {copy && (
-                <div className="space-y-3">
-                  <div className="rounded-xl bg-tela p-4 text-sm whitespace-pre-wrap">
-                    {copy}
-                  </div>
-                  <a
-                    href={`https://wa.me/?text=${encodeURIComponent(copy)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full rounded-xl bg-[#25D366] px-4 py-3.5 text-center font-semibold text-white transition-colors hover:opacity-90"
-                  >
-                    Enviar no WhatsApp 💬
-                  </a>
-                  <div className="flex gap-2">
-                    {typeof navigator !== "undefined" && "share" in navigator && (
-                      <button
-                        onClick={() => navigator.share({ text: copy }).catch(() => {})}
-                        className="flex-1 rounded-xl bg-tinta px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90"
-                      >
-                        Compartilhar
-                      </button>
-                    )}
-                    <button
-                      onClick={copiarClick}
-                      className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-                        copiado
-                          ? "bg-emerald-600 text-white"
-                          : "bg-tela text-tinta hover:bg-black/5"
-                      }`}
+                {copy && (
+                  <div className="space-y-3">
+                    <textarea
+                      value={copy}
+                      onChange={(e) => {
+                        setCopy(e.target.value);
+                        setCopiado(false);
+                      }}
+                      rows={8}
+                      className="w-full resize-y rounded-xl border border-black/10 bg-tela p-4 text-sm outline-none focus:border-marca-500"
+                    />
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(copy)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full rounded-xl bg-[#25D366] px-4 py-3.5 text-center font-semibold text-white transition-colors hover:opacity-90"
                     >
-                      {copiado ? "Copiado! ✅" : "Copiar 📋"}
-                    </button>
+                      Enviar no WhatsApp 💬
+                    </a>
+                    <div className="flex gap-2">
+                      {typeof navigator !== "undefined" &&
+                        "share" in navigator && (
+                          <button
+                            onClick={() =>
+                              navigator.share({ text: copy }).catch(() => {})
+                            }
+                            className="flex-1 rounded-xl bg-tinta px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90"
+                          >
+                            Compartilhar
+                          </button>
+                        )}
+                      <button
+                        onClick={() => copiarTexto(copy)}
+                        className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                          copiado
+                            ? "bg-emerald-600 text-white"
+                            : "bg-tela text-tinta hover:bg-black/5"
+                        }`}
+                      >
+                        {copiado ? "Copiado! ✅" : "Copiar 📋"}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -214,6 +323,49 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                 </div>
               </div>
 
+              {/* Legenda pra colar junto do post no Instagram. */}
+              <div className="space-y-2">
+                <label htmlFor="legenda" className="block text-sm font-semibold">
+                  Legenda pro Instagram
+                </label>
+                {legenda ? (
+                  <>
+                    <textarea
+                      id="legenda"
+                      value={legenda}
+                      onChange={(e) => setLegenda(e.target.value)}
+                      rows={6}
+                      className="w-full resize-y rounded-xl border border-black/10 bg-tela p-4 text-sm outline-none focus:border-marca-500"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={gerarLegendaClick}
+                        className="flex-1 rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5"
+                      >
+                        Gerar outra ✨
+                      </button>
+                      <button
+                        onClick={() => copiarTexto(legenda)}
+                        className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                          copiado
+                            ? "bg-emerald-600 text-white"
+                            : "bg-tela text-tinta hover:bg-black/5"
+                        }`}
+                      >
+                        {copiado ? "Copiado! ✅" : "Copiar legenda 📋"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    onClick={gerarLegendaClick}
+                    className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5"
+                  >
+                    Gerar legenda ✨
+                  </button>
+                )}
+              </div>
+
               {erro && (
                 <p
                   role="alert"
@@ -224,7 +376,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
               )}
 
               <button
-                onClick={() => gerar("compartilhar")}
+                onClick={() => gerar("compartilhar", legenda || undefined)}
                 disabled={estado === "capturando"}
                 className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-60"
               >

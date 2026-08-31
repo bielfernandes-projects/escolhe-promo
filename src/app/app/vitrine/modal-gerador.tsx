@@ -38,6 +38,19 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
   // Legenda pro Instagram na aba de imagem — some caption pra colar junto do post.
   const [legenda, setLegenda] = useState("");
 
+  // Foto propria opcional pra imagem (a API da Shopee so da uma foto por
+  // produto). Object URL — o efeito revoga a anterior sempre que troca e a
+  // ultima quando o modal fecha.
+  const [fotoPropria, setFotoPropria] = useState<string | null>(null);
+  useEffect(() => {
+    if (!fotoPropria) return;
+    return () => URL.revokeObjectURL(fotoPropria);
+  }, [fotoPropria]);
+
+  function escolherFoto(arquivo: File | undefined) {
+    if (arquivo) setFotoPropria(URL.createObjectURL(arquivo));
+  }
+
   // Comeca com o link da casa (Double-Dip) e troca pro pessoal se o usuario
   // tiver credenciais salvas — ver src/app/app/vitrine/link-afiliado.ts.
   // O modal e remontado por produto (nunca troca de produto em vida), entao o
@@ -305,6 +318,36 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                 </select>
               </div>
 
+              {/* Foto: a do produto (padrao) ou uma que o usuario mandar. */}
+              <div className="space-y-2">
+                <span className="block text-sm font-semibold">Foto da imagem</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="cursor-pointer rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5">
+                    {fotoPropria ? "Trocar minha foto" : "Usar uma foto minha"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => escolherFoto(e.target.files?.[0])}
+                    />
+                  </label>
+                  {fotoPropria && (
+                    <button
+                      onClick={() => setFotoPropria(null)}
+                      className="rounded-xl px-3 py-2.5 text-sm font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
+                    >
+                      voltar pra foto do produto
+                    </button>
+                  )}
+                </div>
+                {fotoPropria && (
+                  <p className="text-xs text-tinta-fraca">
+                    Sua foto fica só no seu aparelho — não subimos pra lugar
+                    nenhum.
+                  </p>
+                )}
+              </div>
+
               <div className="flex justify-center rounded-xl bg-tela p-4">
                 <div
                   style={{ width: preview.largura, height: preview.altura }}
@@ -318,7 +361,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                       transformOrigin: "top left",
                     }}
                   >
-                    {renderTemplate(templateAtual, produto)}
+                    {renderTemplate(templateAtual, produto, fotoPropria ?? undefined)}
                   </div>
                 </div>
               </div>
@@ -412,7 +455,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
           pointerEvents: "none",
         }}
       >
-        <div ref={refTemplate}>{renderTemplate(templateAtual, produto)}</div>
+        <div ref={refTemplate}>{renderTemplate(templateAtual, produto, fotoPropria ?? undefined)}</div>
       </div>
     </div>
   );

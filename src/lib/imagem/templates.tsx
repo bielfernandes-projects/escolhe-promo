@@ -46,13 +46,15 @@ export const TEMPLATES: Record<TemplateId, TemplateInfo> = {
 
 type TemplateProps = {
   produto: Produto;
+  /** Sobrescreve a foto do produto — ex.: uma foto que o usuario mandou. */
+  imagemUrl?: string;
 };
 
 /**
  * Feed 1:1 — foto em cima, preço e CTA embaixo.
  * O fundo branco vai virar canvas e pode ser salvo direto do gerador.
  */
-export const FeedSimples: React.FC<TemplateProps> = ({ produto }) => (
+export const FeedSimples: React.FC<TemplateProps> = ({ produto, imagemUrl }) => (
   <div
     style={{
       width: 1080,
@@ -71,7 +73,7 @@ export const FeedSimples: React.FC<TemplateProps> = ({ produto }) => (
     <div
       style={{
         flex: 1,
-        backgroundImage: `url(${produto.imagemUrl})`,
+        backgroundImage: `url(${imagemUrl ?? produto.imagemUrl})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -103,7 +105,7 @@ export const FeedSimples: React.FC<TemplateProps> = ({ produto }) => (
  * Story 9:16 — foto grande, overlay com preço e "clica aqui".
  * Bom pra compartilhar em Stories, tem urgência visual.
  */
-export const StoryUrgencia: React.FC<TemplateProps> = ({ produto }) => (
+export const StoryUrgencia: React.FC<TemplateProps> = ({ produto, imagemUrl }) => (
   <div
     style={{
       width: 1080,
@@ -121,7 +123,7 @@ export const StoryUrgencia: React.FC<TemplateProps> = ({ produto }) => (
       style={{
         position: "absolute",
         inset: 0,
-        backgroundImage: `url(${produto.imagemUrl})`,
+        backgroundImage: `url(${imagemUrl ?? produto.imagemUrl})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -183,7 +185,7 @@ export const StoryUrgencia: React.FC<TemplateProps> = ({ produto }) => (
 /**
  * Feed 1:1 — destaque em card com sombra, bom pra carrossel.
  */
-export const FeedDestaque: React.FC<TemplateProps> = ({ produto }) => (
+export const FeedDestaque: React.FC<TemplateProps> = ({ produto, imagemUrl }) => (
   <div
     style={{
       width: 1080,
@@ -213,7 +215,7 @@ export const FeedDestaque: React.FC<TemplateProps> = ({ produto }) => (
       <div
         style={{
           flex: 0.6,
-          backgroundImage: `url(${produto.imagemUrl})`,
+          backgroundImage: `url(${imagemUrl ?? produto.imagemUrl})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -272,13 +274,17 @@ export const FeedDestaque: React.FC<TemplateProps> = ({ produto }) => (
   </div>
 );
 
-export function renderTemplate(templateId: TemplateId, produto: Produto): ReactNode {
+export function renderTemplate(
+  templateId: TemplateId,
+  produto: Produto,
+  imagemUrl?: string,
+): ReactNode {
   switch (templateId) {
     case "feed-simples":
-      return <FeedSimples produto={produto} />;
+      return <FeedSimples produto={produto} imagemUrl={imagemUrl} />;
     case "story-urgencia":
-      return <StoryUrgencia produto={produto} />;
+      return <StoryUrgencia produto={produto} imagemUrl={imagemUrl} />;
     case "feed-destaque":
-      return <FeedDestaque produto={produto} />;
+      return <FeedDestaque produto={produto} imagemUrl={imagemUrl} />;
   }
 }

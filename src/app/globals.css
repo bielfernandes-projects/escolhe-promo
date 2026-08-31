@@ -33,6 +33,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Superfícies do browser que ninguém desenha e que entregam o padrão de
+ * fábrica: seleção, cursor, foco, barra de rolagem. Puxadas da paleta da
+ * marca pra a página parecer construída, não montada.
+ */
+::selection {
+  background-color: var(--color-marca-200);
+  color: var(--color-marca-900);
+}
+:focus-visible {
+  outline: 2px solid var(--color-marca-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+html {
+  scrollbar-color: var(--color-marca-300) transparent;
+  caret-color: var(--color-marca-600);
+}
+
 /* O público-alvo usa celular: nada de zoom involuntário ao focar um input. */
 input,
 select,
@@ -47,5 +66,70 @@ textarea {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Reveal da landing, ligado ao scroll nativamente (zero JS). Sem suporte do
+ * browser o seletor `@supports` nunca casa e o conteúdo fica visível como
+ * sempre foi — nunca depende da animação pra aparecer.
+ */
+@supports (animation-timeline: view()) {
+  .lp-reveal {
+    animation: lp-rise linear both;
+    animation-timeline: view();
+    /* Termina enquanto a seção ainda está entrando: assim ela nunca fica
+       invisível quando ocupa o centro da tela (o range até `cover` deixava
+       seções curtas presas em opacity 0). */
+    animation-range: entry 0% entry 90%;
+  }
+}
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * O único momento coreografado da página: as telas do app entram em cascata
+ * quando o herói carrega. Ease-out exponencial, a partir de um estado que já
+ * é legível (o conteúdo nunca depende disso pra existir).
+ */
+@keyframes lp-cascata {
+  from {
+    opacity: 0;
+    transform: translateY(2rem) scale(0.97);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.lp-cascata > * {
+  animation: lp-cascata 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.lp-cascata > *:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.lp-cascata > *:nth-child(3) {
+  animation-delay: 0.24s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-cascata > * {
+    animation: none;
   }
 }

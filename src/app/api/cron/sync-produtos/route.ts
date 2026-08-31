@@ -1,8 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sincronizarCatalogo } from "@/lib/produtos/sincronizar";
 
-/** Buscar por categoria (varias chamadas a Shopee) leva mais que o padrao. */
-export const maxDuration = 600;
+/**
+ * Buscar por categoria (varias chamadas a Shopee) leva mais que o padrao de
+ * rota comum. Na pratica roda em ~15-25s; 300 e o teto do plano Hobby.
+ */
+export const maxDuration = 300;
 
 /**
  * Job diario do catalogo: puxa da Shopee e regrava a tabela `produtos`.

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { FormularioSenha } from "./formulario-senha";
 import { FormularioShopee } from "./formulario-shopee";
@@ -18,6 +19,12 @@ export default async function ConfiguracoesPage() {
 
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-5 py-8">
+      <Link
+        href="/app/vitrine"
+        className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-tinta-fraca transition-colors hover:text-marca-700"
+      >
+        <span aria-hidden>←</span> Voltar pra Vitrine
+      </Link>
       <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
         Configurações
       </h1>

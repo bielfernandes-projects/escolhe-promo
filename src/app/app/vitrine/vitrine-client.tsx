@@ -67,9 +67,12 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
           </div>
         </div>
 
-        {/* Rolagem horizontal: no celular os 9 nichos nao cabem em linha. */}
-        <div className="-mb-px overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="mx-auto flex w-max max-w-6xl gap-2 px-4 pb-3">
+        {/* Rolagem horizontal: no celular os 9 nichos nao cabem em linha.
+            Sem mx-auto no trilho interno — com w-max maior que a tela, a
+            margem automatica centraliza e deixa os primeiros chips fora de
+            alcance no scroll. */}
+        <div className="mx-auto -mb-px max-w-6xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex w-max gap-2 px-4 pb-3">
             {chips.map((chip) => (
               <button
                 key={chip}

@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 
 /**
- * Convencao nativa do Next (substitui o public/manifest.json escrito a mao),
- * apontando pros icones gerados em src/app/icon.tsx.
+ * Convencao nativa do Next, apontando pros icones estaticos em src/app/
+ * (icon.png / apple-icon.png), que sao a arte do Canva.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -16,9 +16,9 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#ee4d2d",
     lang: "pt-BR",
     icons: [
-      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "maskable" },
-      { src: "/apple-icon", sizes: "180x180", type: "image/png" },
+      { src: "/icon.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/apple-icon.png", sizes: "180x180", type: "image/png" },
     ],
   };
 }

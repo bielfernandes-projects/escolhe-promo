@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FormularioLogin } from "./formulario-login";
+import { Marca } from "@/app/_brand/marca";
 
-export const metadata = { title: "Entrar — Eita Promo" };
+export const metadata = { title: "Entrar" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const supabase = await createClient();
@@ -21,8 +22,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
       <div className="mb-8 text-center">
-        <Link href="/" className="text-2xl font-bold tracking-tight">
-          Eita<span className="text-marca-600">Promo</span>
+        <Link href="/" aria-label="Eita Promo" className="inline-flex">
+          <Marca simbolo={32} texto="text-2xl" />
         </Link>
         <p className="mt-2 text-sm text-tinta-fraca">
           Entre pra acessar sua Vitrine do dia.

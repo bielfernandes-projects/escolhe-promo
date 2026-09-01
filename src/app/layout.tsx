@@ -21,8 +21,18 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Eita Promo",
-  description: "Copiou, postou, vendeu.",
+  metadataBase: new URL("https://eitapromo.bf.dev.br"),
+  title: {
+    default: "Eita Promo — Copiou, postou, vendeu",
+    template: "%s · Eita Promo",
+  },
+  description:
+    "Gerador de copy e imagem pronta pra afiliado da Shopee divulgar no WhatsApp e no Instagram. Escolhe o produto, cola seu link, copia e posta.",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Eita Promo",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

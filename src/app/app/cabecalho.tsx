@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Marca } from "@/app/_brand/marca";
 
 export function Cabecalho({ email }: { email: string }) {
   const router = useRouter();
@@ -23,8 +24,8 @@ export function Cabecalho({ email }: { email: string }) {
     <header className="sticky top-0 z-40 border-b border-black/5 bg-superficie/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-3">
-          <Link href="/app" className="text-base font-bold tracking-tight">
-            Eita<span className="text-marca-600">Promo</span>
+          <Link href="/app" aria-label="Eita Promo">
+            <Marca />
           </Link>
           <Link
             href="/app/vitrine"

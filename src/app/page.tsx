@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShowcase } from "./_landing/app-showcase";
+import { Marca, MarcaSimbolo } from "./_brand/marca";
 
 /** Ajuste aqui se mudar a oferta. */
 const PRECO = "47";
@@ -81,9 +82,7 @@ export default function LandingPage() {
     <div className="flex flex-1 flex-col overflow-x-clip pb-20 sm:pb-0">
       <header className="mx-auto w-full max-w-6xl px-5 py-5">
         <div className="flex items-center justify-between">
-          <span className="text-base font-bold tracking-tight">
-            Eita<span className="text-marca-600">Promo</span>
-          </span>
+          <Marca />
           <Link
             href="/login"
             className="rounded-lg px-3 py-1.5 text-sm font-semibold text-tinta-fraca transition-colors hover:bg-tela"
@@ -306,8 +305,11 @@ export default function LandingPage() {
       </main>
 
       <footer className="mx-auto w-full max-w-5xl px-5 py-8 text-center text-xs text-tinta-fraca">
+        <p className="mb-3 flex items-center justify-center gap-1.5 text-tinta-fraca">
+          <MarcaSimbolo size={16} /> Eita Promo
+        </p>
         <p>
-          Eita Promo · Já comprou?{" "}
+          Já comprou?{" "}
           <Link
             href="/login"
             className="font-semibold text-marca-700 underline underline-offset-4"

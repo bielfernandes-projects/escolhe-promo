@@ -17,7 +17,12 @@
 import React from "react";
 import type { ReactElement } from "react";
 
-export type TemplateId = "achadinho-do-dia" | "feed-cartao";
+export type TemplateId =
+  | "feed-1"
+  | "feed-2"
+  | "story-1"
+  | "story-2"
+  | "feed-cartao";
 
 export type TemplateInfo = {
   nome: string;
@@ -28,12 +33,10 @@ export type TemplateInfo = {
 };
 
 export const TEMPLATES: Record<TemplateId, TemplateInfo> = {
-  "achadinho-do-dia": {
-    nome: "Achadinho do dia",
-    rotulo: "Feed 4:5",
-    largura: 1080,
-    altura: 1350,
-  },
+  "feed-1": { nome: "Achadinho do dia", rotulo: "Feed 4:5", largura: 1080, altura: 1350 },
+  "feed-2": { nome: "Achadinho roxo", rotulo: "Feed 4:5", largura: 1080, altura: 1350 },
+  "story-1": { nome: "Oferta imperdível", rotulo: "Story 9:16", largura: 1080, altura: 1920 },
+  "story-2": { nome: "Super oferta", rotulo: "Story 9:16", largura: 1080, altura: 1920 },
   "feed-cartao": { nome: "Cartão", rotulo: "Feed 4:5", largura: 1080, altura: 1350 },
 };
 
@@ -83,15 +86,21 @@ type Moldura = {
   altura: number;
   /** Onde a foto do produto entra. Um pouco maior que o furo, pra não sobrar borda. */
   foto: Slot;
-  nome: Slot & { tamanho: number; cor: string; maxChars: number };
-  /** O "R$" fica numa linha e o valor na de baixo — cabe em coluna estreita. */
+  /** Tarja do nome. Ausente quando a arte não tem espaço pra isso (os Stories). */
+  nome?: Slot & { tamanho: number; cor: string; maxChars: number };
   preco: {
     x: number;
     y: number;
     largura: number;
     cor: string;
     tamanhoMax: number;
-    tamanhoMoeda: number;
+    /**
+     * "empilhado": "R$" numa linha e o valor na de baixo — cabe em coluna
+     * estreita. "linha": tudo numa linha só, quando há largura sobrando.
+     */
+    layout: "empilhado" | "linha";
+    /** Só usado no layout empilhado. */
+    tamanhoMoeda?: number;
     /** Família da fonte; escolhida pra combinar com a letra da arte. */
     fonte: FonteDisplay;
   };
@@ -113,32 +122,90 @@ const LARGURA_DIGITO: Record<FonteDisplay, number> = {
   "Baloo 2": 0.58,
 };
 
+/**
+ * Geometria de cada arte, medida pixel a pixel no PNG exportado do Canva
+ * (scripts/preparar-moldura.ps1 + análise das áreas magenta).
+ *
+ * Feeds: o polaroid é inclinado — a área da foto é um retângulo 573x543 girado
+ * -4,7° com centro em (543.5, 712.5), e a tarja do nome segue a mesma
+ * inclinação, com centro em (572, 1048). O preço vai na coluna estreita à
+ * esquerda, embaixo do "APENAS:" da arte, por isso empilhado.
+ *
+ * Stories: a foto é um quadrado reto de 864x860 em (108, 468), não há tarja de
+ * nome, e o preço entra à direita do "Apenas:" (que ocupa x 111..439,
+ * y 1395..1485), onde sobra largura pra uma linha só.
+ */
+const FEED_FOTO: Slot = { x: 249, y: 433, largura: 589, altura: 559, rot: -4.7 };
+const FEED_NOME = {
+  x: 312,
+  y: 1008,
+  largura: 520,
+  altura: 80,
+  rot: -4.7,
+  // Duas linhas de ~32 caracteres cabem na tarja sem encostar nas bordas.
+  tamanho: 28,
+  cor: "#141414",
+  maxChars: 58,
+} as const;
+const FEED_PRECO = {
+  x: 26,
+  y: 996,
+  largura: 240,
+  cor: "#141414",
+  tamanhoMax: 112,
+  tamanhoMoeda: 44,
+  layout: "empilhado",
+  fonte: "Baloo 2",
+} as const;
+
+const STORY_FOTO: Slot = { x: 105, y: 465, largura: 870, altura: 866 };
+
 export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
-  // Medidas tiradas pixel a pixel do PNG exportado do Canva: o furo magenta
-  // tem bbox x 236..851 / y 419..1006, que corresponde a um retângulo de
-  // 573x543 girado -4,7° com centro em (543.5, 712.5).
-  "achadinho-do-dia": {
-    arquivo: "/templates/achadinho-do-dia.png",
+  "feed-1": {
+    arquivo: "/templates/feed_1.png",
     largura: 1080,
     altura: 1350,
-    foto: { x: 249, y: 433, largura: 589, altura: 559, rot: -4.7 },
-    nome: {
-      x: 312,
-      y: 1020,
-      largura: 520,
-      altura: 60,
-      rot: -4.7,
-      tamanho: 32,
-      cor: "#141414",
-      maxChars: 30,
-    },
+    foto: FEED_FOTO,
+    nome: FEED_NOME,
+    preco: FEED_PRECO,
+  },
+  "feed-2": {
+    arquivo: "/templates/feed_2.png",
+    largura: 1080,
+    altura: 1350,
+    foto: FEED_FOTO,
+    nome: FEED_NOME,
+    preco: FEED_PRECO,
+  },
+  "story-1": {
+    arquivo: "/templates/story_1.png",
+    largura: 1080,
+    altura: 1920,
+    foto: STORY_FOTO,
     preco: {
-      x: 26,
-      y: 996,
-      largura: 240,
-      cor: "#141414",
-      tamanhoMax: 112,
-      tamanhoMoeda: 44,
+      x: 470,
+      y: 1382,
+      largura: 520,
+      // Fundo rosa forte: o preço acompanha o branco do "Apenas:".
+      cor: "#ffffff",
+      tamanhoMax: 104,
+      layout: "linha",
+      fonte: "Baloo 2",
+    },
+  },
+  "story-2": {
+    arquivo: "/templates/story_2.png",
+    largura: 1080,
+    altura: 1920,
+    foto: STORY_FOTO,
+    preco: {
+      x: 470,
+      y: 1382,
+      largura: 520,
+      // Azul do "Apenas:" desta arte, amostrado do PNG.
+      cor: "#1800ad",
+      tamanhoMax: 104,
+      layout: "linha",
       fonte: "Baloo 2",
     },
   },
@@ -159,7 +226,11 @@ function ImagemComMoldura({
   foto: string;
   arte: string;
 }) {
-  const valor = fmtPreco(dados.preco);
+  const empilhado = moldura.preco.layout === "empilhado";
+  // No empilhado só o valor divide a linha; na linha única o "R$ " conta junto.
+  const valor = empilhado
+    ? fmtPreco(dados.preco)
+    : `R$ ${fmtPreco(dados.preco)}`;
   const tamanhoValor = tamanhoQueCabe(
     valor,
     moldura.preco.largura,
@@ -199,29 +270,31 @@ function ImagemComMoldura({
         style={{ position: "absolute", left: 0, top: 0 }}
       />
 
-      {/* 3. Nome do produto, na tarja branca. */}
-      <div
-        style={{
-          position: "absolute",
-          left: moldura.nome.x,
-          top: moldura.nome.y,
-          width: moldura.nome.largura,
-          height: moldura.nome.altura,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transform: `rotate(${moldura.nome.rot ?? 0}deg)`,
-          fontSize: moldura.nome.tamanho,
-          fontWeight: 700,
-          color: moldura.nome.cor,
-          textAlign: "center",
-          lineHeight: 1.2,
-        }}
-      >
-        {encurtar(dados.nome, moldura.nome.maxChars)}
-      </div>
+      {/* 3. Nome do produto, na tarja branca — só nas artes que têm uma. */}
+      {moldura.nome && (
+        <div
+          style={{
+            position: "absolute",
+            left: moldura.nome.x,
+            top: moldura.nome.y,
+            width: moldura.nome.largura,
+            height: moldura.nome.altura,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transform: `rotate(${moldura.nome.rot ?? 0}deg)`,
+            fontSize: moldura.nome.tamanho,
+            fontWeight: 700,
+            color: moldura.nome.cor,
+            textAlign: "center",
+            lineHeight: 1.2,
+          }}
+        >
+          {encurtar(dados.nome, moldura.nome.maxChars)}
+        </div>
+      )}
 
-      {/* 4. Preço, embaixo do "APENAS:" da arte. */}
+      {/* 4. Preço, junto do "APENAS:" da arte. */}
       <div
         style={{
           position: "absolute",
@@ -230,12 +303,16 @@ function ImagemComMoldura({
           width: moldura.preco.largura,
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
+          alignItems: empilhado ? "center" : "flex-start",
           fontFamily: moldura.preco.fonte,
           color: moldura.preco.cor,
         }}
       >
-        <div style={{ fontSize: moldura.preco.tamanhoMoeda, lineHeight: 1 }}>R$</div>
+        {empilhado && (
+          <div style={{ fontSize: moldura.preco.tamanhoMoeda ?? 44, lineHeight: 1 }}>
+            R$
+          </div>
+        )}
         <div style={{ fontSize: tamanhoValor, lineHeight: 1 }}>{valor}</div>
       </div>
     </div>
@@ -307,7 +384,10 @@ function FeedCartao({ dados, foto }: { dados: DadosImagem; foto: string }) {
           }}
         >
           <div style={{ fontFamily: "Anton", fontSize: 150, lineHeight: 1, color: "#fff" }}>
-            R$ {fmtPreco(dados.preco)}
+            {/* Template string de propósito: "R$ {expr}" viraria DOIS nós de
+                texto, e o satori exige display:flex em pai com mais de um
+                filho — o que quebrava este template. */}
+            {`R$ ${fmtPreco(dados.preco)}`}
           </div>
         </div>
       </div>

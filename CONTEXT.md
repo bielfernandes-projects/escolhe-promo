@@ -22,7 +22,11 @@ O array `productCatIds` que a Shopee devolve para um Produto: os IDs numéricos 
 Conjunto de quatro slots (Abertura, Benefício, Urgência, Fechamento), cada um com um array de variações; o sorteio de uma variação por slot gera uma copy única.
 
 **Template Visual**:
-Um layout que gera a imagem de divulgação (Feed/Story) no estilo "achadinho" — preço em destaque, uma foto (a do Produto por padrão, ou uma que o usuário enviou) e enfeites fixos. Montado pelo satori/next-og no servidor (rota `/api/imagem`), não no DOM — o html2canvas embaralhava o texto com fonte forte. Hoje há um modelo próprio ("Cartão"); os demais virão de molduras desenhadas no Canva (PNG com retângulos coloridos marcando onde entram a foto e o preço).
+Um layout que gera a imagem de divulgação (Feed 4:5 ou Story 9:16) no estilo "achadinho" — preço em destaque, uma foto (a do Produto por padrão, ou uma que o usuário enviou) e enfeites fixos. Montado pelo satori/next-og no servidor (rota `/api/imagem`), não no DOM — o html2canvas embaralhava o texto com fonte forte.
+
+**Moldura**:
+Um Template Visual cuja arte foi desenhada no Canva e exportada em PNG, em vez de montada em código. No Canva, as áreas que o app preenche são pintadas de magenta puro (`#FF00FF`); `scripts/preparar-moldura.ps1` converte cada área em furo transparente (onde a foto do Produto entra por baixo) ou em tarja branca (onde o app escreve texto). A geometria de cada slot fica em `MOLDURAS`, em `src/lib/imagem/templates.tsx`. Os PNGs originais ficam em `arte-canva/` e os preparados em `public/templates/`.
+_Avoid_: template do Canva (o app não fala com a API do Canva — o Autofill dela exige plano Enterprise)
 
 **Double-Dip**:
 Ao abrir o modal de um Produto, o passo 1 é o botão "Abrir produto na Shopee", que leva pelo link de afiliado do dono do app — o usuário passa por esse link no caminho de pegar o próprio link de afiliado na Shopee. Se ele seguir sem colar um link próprio ("não tenho um link de afiliado"), a copy também sai com o link do dono. Nos dois casos o dono monetiza.

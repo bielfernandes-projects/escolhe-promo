@@ -10,7 +10,7 @@ type Entrega = "compartilhar" | "baixar";
 
 export function useGeradorImagem(produto: Produto) {
   const [templateAtual, setTemplateAtual] =
-    useState<TemplateId>("achadinho-do-dia");
+    useState<TemplateId>("feed-1");
   const [estado, setEstado] = useState<EstadoCaptura>("ocioso");
   const [erro, setErro] = useState<string | null>(null);
 

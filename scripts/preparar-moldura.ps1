@@ -1,32 +1,50 @@
 # Prepara uma arte exportada do Canva pra virar Template Visual do app.
 #
-# Faz duas coisas no PNG:
-#  1. Fura (deixa transparente) a area magenta #FF00FF que marca onde entra a
-#     foto do produto — o app desenha a foto por baixo da arte.
-#  2. Apaga os textos de exemplo ("NOME DO PRODUTO" etc.) preenchendo com a cor
-#     da tarja, pra o texto real nao ficar sobreposto ao placeholder.
+# Convencao: no Canva, pinte de magenta puro (#FF00FF) as areas que o app vai
+# preencher. Este script converte cada area magenta em:
+#   -Furo   x,y  -> transparente (a foto do produto entra POR BAIXO da arte)
+#   -Branco x,y  -> branco solido (tarja onde o app escreve texto)
+#
+# A area e identificada por um PONTO qualquer dentro dela (flood fill), nao por
+# retangulo: nas artes com elementos inclinados as areas se cruzam em x/y, e
+# caixas retangulares acabariam brigando pela mesma faixa de pixels.
+#
+# -LimparTexto "x1,y1,x2,y2" apaga textos de exemplo (pixels neutros) numa
+# regiao, preservando as cores saturadas do desenho.
 #
 # Uso:
 #   pwsh scripts/preparar-moldura.ps1 `
-#     -Origem  "C:\...\template_1_feed.png" `
-#     -Destino "public\templates\achadinho-do-dia.png" `
-#     -FuroAteY 1150 `
-#     -LimparTexto "390,1005,760,1090"
-#
-# -FuroAteY: so fura magenta acima dessa linha (deixa passar pilulas/CTAs
-#   magenta que sao parte do desenho).
-# -LimparTexto: lista de retangulos "x1,y1,x2,y2" onde os pixels neutros
-#   (texto preto e seu antialias) viram branco. Cores saturadas (dourado,
-#   magenta) sao preservadas.
+#     -Origem "arte-canva\feed_1.png" -Destino "public\templates\feed_1.png" `
+#     -Furo "543,700" -Branco "572,1048"
 
 param(
   [Parameter(Mandatory=$true)][string]$Origem,
   [Parameter(Mandatory=$true)][string]$Destino,
-  [int]$FuroAteY = 999999,
+  [string[]]$Furo = @(),
+  [string[]]$Branco = @(),
   [string[]]$LimparTexto = @()
 )
 
 Add-Type -AssemblyName System.Drawing
+
+function ParsePontos($lista) {
+  $r = New-Object System.Collections.ArrayList
+  foreach ($s in $lista) {
+    $p = $s.Split(",") | ForEach-Object { [int]$_.Trim() }
+    [void]$r.Add(@($p[0], $p[1]))
+  }
+  # A virgula evita o unrolling do PowerShell: sem ela uma lista de um item
+  # volta como valores soltos.
+  return ,$r
+}
+function ParseCaixas($lista) {
+  $r = New-Object System.Collections.ArrayList
+  foreach ($s in $lista) {
+    $p = $s.Split(",") | ForEach-Object { [int]$_.Trim() }
+    [void]$r.Add(@($p[0], $p[1], $p[2], $p[3]))
+  }
+  return ,$r
+}
 
 $origemAbs = (Resolve-Path $Origem).Path
 $img = [System.Drawing.Bitmap]::FromFile($origemAbs)
@@ -42,31 +60,64 @@ $bo = New-Object byte[] $n
 [System.Runtime.InteropServices.Marshal]::Copy($dIn.Scan0, $bi, 0, $n)
 $stride = $dIn.Stride
 
-# Retangulos de limpeza como listas de inteiros
-$caixas = @()
-foreach ($r in $LimparTexto) {
-  $p = $r.Split(",") | ForEach-Object { [int]$_.Trim() }
-  $caixas += ,@($p[0], $p[1], $p[2], $p[3])
-}
-
-$furados = 0; $limpos = 0
+# Mascara de magenta, com tolerancia pra pegar a borda antialiasada
+$total = $w * $h
+$mask = New-Object bool[] $total
 for ($y=0; $y -lt $h; $y++) {
   $row = $y * $stride
+  $off = $y * $w
   for ($x=0; $x -lt $w; $x++) {
     $i = $row + $x*4
-    $b = $bi[$i]; $g = $bi[$i+1]; $r = $bi[$i+2]
-
-    # 1) furo da foto
-    if (($y -lt $FuroAteY) -and ($r -gt 180) -and ($b -gt 180) -and ($g -lt 130)) {
-      $bo[$i]=0; $bo[$i+1]=0; $bo[$i+2]=0; $bo[$i+3]=0
-      $furados++
-      continue
+    if ($bi[$i+2] -gt 180 -and $bi[$i] -gt 180 -and $bi[$i+1] -lt 130) {
+      $mask[$off + $x] = $true
     }
+  }
+}
 
-    # 2) limpeza de texto de exemplo: so pixels neutros (preto/cinza), pra nao
-    #    comer a moldura dourada nem outras cores saturadas
+# 0 = intacto, 1 = furo, 2 = branco
+$acao = New-Object byte[] $total
+
+function Marcar($semente, $valor) {
+  $sx = $semente[0]; $sy = $semente[1]
+  $p0 = $sy * $script:w + $sx
+  if (-not $script:mask[$p0]) {
+    Write-Output "  AVISO: ponto ($sx,$sy) nao esta em area magenta — ignorado"
+    return 0
+  }
+  $fila = New-Object System.Collections.Generic.Queue[int]
+  $fila.Enqueue($p0)
+  $script:acao[$p0] = $valor
+  $cnt = 0
+  while ($fila.Count -gt 0) {
+    $p = $fila.Dequeue()
+    $cnt++
+    $py = [int][Math]::Floor($p / $script:w)
+    $px = $p - ($py * $script:w)
+    if ($px -gt 0)                { $q = $p - 1;          if ($script:mask[$q] -and $script:acao[$q] -eq 0) { $script:acao[$q]=$valor; $fila.Enqueue($q) } }
+    if ($px -lt $script:w - 1)    { $q = $p + 1;          if ($script:mask[$q] -and $script:acao[$q] -eq 0) { $script:acao[$q]=$valor; $fila.Enqueue($q) } }
+    if ($py -gt 0)                { $q = $p - $script:w;  if ($script:mask[$q] -and $script:acao[$q] -eq 0) { $script:acao[$q]=$valor; $fila.Enqueue($q) } }
+    if ($py -lt $script:h - 1)    { $q = $p + $script:w;  if ($script:mask[$q] -and $script:acao[$q] -eq 0) { $script:acao[$q]=$valor; $fila.Enqueue($q) } }
+  }
+  return $cnt
+}
+
+foreach ($s in (ParsePontos $Furo))   { $c = Marcar $s 1; Write-Output "  furo em ($($s[0]),$($s[1])): $c px" }
+foreach ($s in (ParsePontos $Branco)) { $c = Marcar $s 2; Write-Output "  branco em ($($s[0]),$($s[1])): $c px" }
+
+$limpezas = ParseCaixas $LimparTexto
+$nLimpo = 0
+for ($y=0; $y -lt $h; $y++) {
+  $row = $y * $stride
+  $off = $y * $w
+  for ($x=0; $x -lt $w; $x++) {
+    $i = $row + $x*4
+    $a = $acao[$off + $x]
+    if ($a -eq 1) { $bo[$i]=0; $bo[$i+1]=0; $bo[$i+2]=0; $bo[$i+3]=0; continue }
+    if ($a -eq 2) { $bo[$i]=255; $bo[$i+1]=255; $bo[$i+2]=255; $bo[$i+3]=255; continue }
+
+    $b = $bi[$i]; $g = $bi[$i+1]; $r = $bi[$i+2]
     $dentro = $false
-    foreach ($c in $caixas) {
+    foreach ($c in $limpezas) {
       if ($x -ge $c[0] -and $x -le $c[2] -and $y -ge $c[1] -and $y -le $c[3]) { $dentro = $true; break }
     }
     if ($dentro) {
@@ -75,14 +126,14 @@ for ($y=0; $y -lt $h; $y++) {
       $media = ($r + $g + $b) / 3
       if (($max - $min) -lt 60 -and $media -lt 245) {
         $bo[$i]=255; $bo[$i+1]=255; $bo[$i+2]=255; $bo[$i+3]=255
-        $limpos++
+        $nLimpo++
         continue
       }
     }
-
     $bo[$i]=$b; $bo[$i+1]=$g; $bo[$i+2]=$r; $bo[$i+3]=255
   }
 }
+if ($nLimpo -gt 0) { Write-Output "  texto limpo: $nLimpo px" }
 
 [System.Runtime.InteropServices.Marshal]::Copy($bo, 0, $dOut.Scan0, $n)
 $img.UnlockBits($dIn)
@@ -93,6 +144,4 @@ $dir = [System.IO.Path]::GetDirectoryName($destinoAbs)
 if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
 $out.Save($destinoAbs, [System.Drawing.Imaging.ImageFormat]::Png)
 $out.Dispose(); $img.Dispose()
-
-Write-Output "furados: $furados px | texto limpo: $limpos px"
-Write-Output "salvo: $destinoAbs"
+Write-Output "  salvo: $Destino"

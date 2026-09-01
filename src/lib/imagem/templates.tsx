@@ -87,7 +87,12 @@ type Moldura = {
   /** Onde a foto do produto entra. Um pouco maior que o furo, pra não sobrar borda. */
   foto: Slot;
   /** Tarja do nome. Ausente quando a arte não tem espaço pra isso (os Stories). */
-  nome?: Slot & { tamanho: number; cor: string; maxChars: number };
+  nome?: Slot & {
+    tamanho: number;
+    cor: string;
+    maxChars: number;
+    fonte: FonteDisplay;
+  };
   preco: {
     x: number;
     y: number;
@@ -138,14 +143,16 @@ const LARGURA_DIGITO: Record<FonteDisplay, number> = {
 const FEED_FOTO: Slot = { x: 249, y: 433, largura: 589, altura: 559, rot: -4.7 };
 const FEED_NOME = {
   x: 312,
-  y: 1008,
+  y: 1006,
   largura: 520,
-  altura: 80,
+  altura: 84,
   rot: -4.7,
-  // Duas linhas de ~32 caracteres cabem na tarja sem encostar nas bordas.
-  tamanho: 28,
+  // Baloo 2 (densa e arredondada) pra acompanhar a letra de marcador da arte —
+  // com Inter o nome saía com cara de fonte de sistema e destoava de tudo.
+  tamanho: 27,
   cor: "#141414",
-  maxChars: 58,
+  maxChars: 54,
+  fonte: "Baloo 2",
 } as const;
 const FEED_PRECO = {
   x: 26,
@@ -283,8 +290,8 @@ function ImagemComMoldura({
             alignItems: "center",
             justifyContent: "center",
             transform: `rotate(${moldura.nome.rot ?? 0}deg)`,
+            fontFamily: moldura.nome.fonte,
             fontSize: moldura.nome.tamanho,
-            fontWeight: 700,
             color: moldura.nome.cor,
             textAlign: "center",
             lineHeight: 1.2,

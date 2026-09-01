@@ -113,7 +113,18 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
     if (!podeGerar) return;
     // Sempre WhatsApp aqui: a aba já diz onde o texto vai ser colado, então o
     // negrito com asterisco é sempre o certo e não precisa perguntar.
-    setCopy(gerador.proxima(produto, { canal: "whatsapp", linkAfiliado: linkParaCopy }));
+    setCopy(
+      gerador.proxima(
+        {
+          nome: produto.nome,
+          preco: produto.preco,
+          vendas: produto.vendas,
+          avaliacao: produto.avaliacao,
+          taxaDesconto: produto.taxaDesconto,
+        },
+        { canal: "whatsapp", linkAfiliado: linkParaCopy },
+      ),
+    );
     setCopiado(null);
   }
 

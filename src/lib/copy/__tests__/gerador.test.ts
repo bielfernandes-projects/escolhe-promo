@@ -40,7 +40,11 @@ describe("criarGeradorDeCopy", () => {
     }
   });
 
-  it("totalCombinacoes bate com o produto real dos slots (regressao se algum slot mudar de tamanho sem querer)", () => {
-    expect(totalCombinacoes()).toBeGreaterThan(1000);
+  it("mantem um numero razoavel de combinacoes", () => {
+    // Caiu de ~5.700 pra ~250 quando a copy passou a seguir o formato fixo
+    // pedido pelo dono (nome, De/Por/Desconto e link sao dados da oferta e nao
+    // podem variar). O que varia e a abertura e o fechamento. Este piso existe
+    // pra ninguem esvaziar as listas sem perceber.
+    expect(totalCombinacoes()).toBeGreaterThan(150);
   });
 });

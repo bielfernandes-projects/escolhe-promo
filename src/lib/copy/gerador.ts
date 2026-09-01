@@ -1,9 +1,9 @@
 import { SLOTS, type Slot, type SlotId } from "./slots";
 
 /**
- * Where the copy is going to be pasted. WhatsApp renders *asterisks* as bold
- * and turns bare URLs into taps; Instagram captions do neither, so the same
- * markers there would show up as literal punctuation.
+ * Onde a copy vai ser colada. O WhatsApp renderiza *asteriscos* como negrito;
+ * a legenda do Instagram não, então lá os marcadores viram pontuação solta e
+ * precisam sumir.
  */
 export type Canal = "whatsapp" | "instagram";
 
@@ -12,6 +12,8 @@ export type DadosCopy = {
   preco: number;
   vendas?: number;
   avaliacao?: number;
+  /** Percentual de desconto informado pela Shopee (0 a 100). */
+  taxaDesconto?: number;
 };
 
 export type OpcoesCopy = {
@@ -36,10 +38,11 @@ function formatarPreco(valor: number): string {
 }
 
 /**
- * Long product titles are Shopee's keyword soup; past ~60 characters they read
- * as spam in a WhatsApp message, so they are cut at a word boundary.
+ * Títulos da Shopee são sopa de palavra-chave e, muito longos, dão cara de spam
+ * na mensagem. O corte é no limite da palavra. O teto acomoda um nome completo
+ * de verdade (o exemplo do dono tem 78 caracteres) e só apara os exagerados.
  */
-function encurtarNome(nome: string, maximo = 60): string {
+function encurtarNome(nome: string, maximo = 90): string {
   if (nome.length <= maximo) return nome;
   const corte = nome.slice(0, maximo);
   const ultimoEspaco = corte.lastIndexOf(" ");
@@ -52,6 +55,19 @@ function aplicarNegrito(texto: string, canal: Canal): string {
     : texto.replace(/\{b\}|\{\/b\}/g, "");
 }
 
+/**
+ * Preço antes da promoção. A Shopee não devolve esse valor: manda o preço atual
+ * e a % de desconto, então o "de" é reconstruído. Só existe quando ela informou
+ * um desconto — o que acontece em ~87% dos produtos.
+ */
+function precoAntes(dados: DadosCopy): number | null {
+  const taxa = dados.taxaDesconto ?? 0;
+  if (taxa <= 0 || taxa >= 100) return null;
+  const de = dados.preco / (1 - taxa / 100);
+  // Diferença de centavos não merece uma linha "De:" na mensagem.
+  return de - dados.preco >= 0.5 ? de : null;
+}
+
 function preencher(
   modelo: string,
   dados: DadosCopy,
@@ -61,13 +77,14 @@ function preencher(
   const valores: Record<string, string> = {
     nome: encurtarNome(dados.nome),
     preco: formatarPreco(dados.preco),
+    desconto: String(Math.round(dados.taxaDesconto ?? 0)),
     vendas: String(dados.vendas ?? 0),
     avaliacao: (dados.avaliacao ?? 0).toFixed(1),
     link,
   };
 
   const preenchido = modelo.replace(
-    /\{(nome|preco|vendas|avaliacao|link)\}/g,
+    /\{(nome|preco|desconto|vendas|avaliacao|link)\}/g,
     (_, chave: string) => valores[chave],
   );
 
@@ -77,6 +94,24 @@ function preencher(
 /** Which variation each slot contributed, so the next draw can avoid them. */
 type Escolhas = Partial<Record<SlotId, string>>;
 
+function sortear(slot: Slot, evitar: Escolhas, escolher: <T>(o: T[]) => T): string {
+  // Drawing from everything except last time's pick is what makes a second
+  // click feel like a new copy. With a single-variation slot there is
+  // nothing else to draw, so the filter would empty the pool.
+  const anterior = evitar[slot.id];
+  const disponiveis =
+    slot.variacoes.length > 1
+      ? slot.variacoes.filter((v) => v !== anterior)
+      : slot.variacoes;
+  return escolher(disponiveis);
+}
+
+function slotPorId(id: SlotId): Slot {
+  const s = SLOTS.find((x) => x.id === id);
+  if (!s) throw new Error(`slot desconhecido: ${id}`);
+  return s;
+}
+
 function montar(
   dados: DadosCopy,
   opcoes: OpcoesCopy,
@@ -85,22 +120,33 @@ function montar(
   const { canal, linkAfiliado, escolher = escolhaAleatoria } = opcoes;
   const escolhas: Escolhas = {};
 
-  const partes = SLOTS.map((slot: Slot) => {
-    // Drawing from everything except last time's pick is what makes a second
-    // click feel like a new copy. With a single-variation slot there is
-    // nothing else to draw, so the filter would empty the pool.
-    const anterior = evitar[slot.id];
-    const disponiveis =
-      slot.variacoes.length > 1
-        ? slot.variacoes.filter((v) => v !== anterior)
-        : slot.variacoes;
+  const de = precoAntes(dados);
+  // Sem percentual de desconto, a abertura não pode prometer "X% OFF".
+  const idAbertura: SlotId = de ? "abertura" : "aberturaSemDesconto";
 
-    const variacao = escolher(disponiveis);
-    escolhas[slot.id] = variacao;
-    return preencher(variacao, dados, linkAfiliado, canal);
-  });
+  const abertura = sortear(slotPorId(idAbertura), evitar, escolher);
+  escolhas[idAbertura] = abertura;
 
-  return { texto: partes.join("\n\n"), escolhas };
+  const fechamento = sortear(slotPorId("fechamento"), evitar, escolher);
+  escolhas.fechamento = fechamento;
+
+  const blocos: string[] = [
+    preencher(abertura, dados, linkAfiliado, canal),
+    preencher("{b}{nome}{/b}", dados, linkAfiliado, canal),
+  ];
+
+  if (de) {
+    blocos.push(`🏷️ De: ${formatarPreco(de)}`);
+    blocos.push(`💰 Por: ${formatarPreco(dados.preco)}`);
+    blocos.push(`🎯 Desconto: ${Math.round(dados.taxaDesconto ?? 0)}%`);
+  } else {
+    blocos.push(`💰 Por: ${formatarPreco(dados.preco)}`);
+  }
+
+  blocos.push(`🔗 Link da oferta:\n${linkAfiliado}`);
+  blocos.push(preencher(fechamento, dados, linkAfiliado, canal));
+
+  return { texto: blocos.join("\n\n"), escolhas };
 }
 
 /**
@@ -132,5 +178,7 @@ export function criarGeradorDeCopy() {
 
 /** How many distinct copies the current Template de Copy can produce. */
 export function totalCombinacoes(): number {
-  return SLOTS.reduce((total, slot) => total * slot.variacoes.length, 1);
+  const abertura = slotPorId("abertura").variacoes.length;
+  const fechamento = slotPorId("fechamento").variacoes.length;
+  return abertura * fechamento;
 }

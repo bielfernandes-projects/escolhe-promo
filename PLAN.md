@@ -21,7 +21,7 @@ Micro SaaS B2C que resolve a dor operacional de afiliados iniciantes da Shopee (
 | Storage de imagens | Supabase Storage | Mesmo projeto de produtos/auth. |
 | Fonte de dados de produto | Shopee Affiliate Open API (`productOfferV2`) | Acesso já aprovado; evita risco de scraping/ToS. |
 | Job diário de catálogo | Vercel Cron Job | Mesma plataforma do deploy. |
-| Geração de imagem | `html2canvas` (client-side) | Zero custo de servidor. |
+| Geração de imagem | `satori`/`next-og` na rota `/api/imagem` | O `html2canvas` embaralhava texto com fonte pesada; satori renderiza igual em todo device. |
 | PWA | Instalável + cache básico de assets estáticos | Sem exigência de uso 100% offline no MVP. |
 
 ## Core Features (MVP 1.0)
@@ -44,8 +44,8 @@ Micro SaaS B2C que resolve a dor operacional de afiliados iniciantes da Shopee (
 
 ## Riscos Técnicos Conhecidos
 
-- **Download de imagem no iOS Safari (PWA)**: `html2canvas` gera um blob PNG, mas iOS Safari não dispara "salvar na galeria" de forma confiável a partir de um link de download programático dentro de uma PWA instalada. Mitigação: `navigator.share` com o arquivo (abre a folha nativa de compartilhar/salvar do iOS), com fallback pra abrir a imagem numa nova aba (usuário salva por long-press).
-- **Fontes customizadas no `html2canvas`**: aguardar `document.fonts.ready` antes de capturar o canvas, senão o texto sai com a fonte padrão do sistema em vez da fonte do Template Visual.
+- **Compartilhar no mobile (Web Share API)**: a folha nativa só abre dentro de uma *transient user activation*, que expira durante um `await`. A imagem é montada no servidor (`/api/imagem`, satori) e o `fetch` dela não pode ficar entre o clique e o `navigator.share`. Solução em `src/lib/imagem/useGerador.ts`: gerar o blob **antes** do clique e só compartilhar o que já está pronto. Fallback pra download se `navigator.share` não existir ou recusar arquivos. Verificado no desktop; **falta confirmar em iOS/Android real**.
+- **Imagem via satori (rota `/api/imagem`)**, não `html2canvas` no DOM — o html2canvas embaralhava texto com fonte pesada. Restrições do satori: elemento com >1 filho exige `display: flex`; `R$ {expr}` em JSX = dois nós de texto e quebra a rota (usar template string). As fontes `.woff` são carregadas pela própria rota; `globals.css` só replica o `@font-face` pro preview do modal.
 
 ## Backlog / Futuro
 
@@ -86,11 +86,22 @@ Correção de bug junto: `.lp-reveal` terminava o fade em `cover 25%`, deixando 
 
 Ainda pendente da Fase 5 (marketing, não é código): variações de anúncio e roteiros de Reels pro @homidapromo.
 
+## Sessão 01/09/2026 — Fase 3 (imagem no Canva) + acabamento
+
+- **Templates de imagem redesenhados a partir de arte do Canva** (Fase 3, ✅). O dono desenhou 4 molduras — 2 de feed (4:5) e 2 de story (9:16) — no Canva, com as áreas de foto/texto pintadas de magenta. `scripts/preparar-moldura.ps1` converte cada PNG: furo transparente pra foto (a arte fica por cima), tarja branca pra texto, e `-LimparTexto` pra apagar placeholder. A conversão usa flood fill a partir de um ponto-semente, não bounding box — nas artes inclinadas (polaroid torto) as caixas de furo e tarja se cruzavam em x/y e davam faixa preta. Geometria dos slots em `MOLDURAS` (`src/lib/imagem/templates.tsx`); a imagem final é montada pelo **satori/next-og** na rota `/api/imagem` (o `html2canvas` embaralhava texto com fonte pesada). Restrições do satori anotadas no código: todo elemento com >1 filho precisa de `display: flex`; `R$ {expr}` em JSX vira dois nós de texto e quebra a rota.
+- **Abas do modal renomeadas pra WhatsApp / Instagram** (`modal-gerador.tsx`). Passos 1 (abrir produto) e 2 (colar link) subiram pra cima das abas — servem às duas. Aba WhatsApp: gera a copy com negrito e o link colado, sem dropdown de canal. Aba Instagram: seletor de template com `<optgroup>` separando Feed (4:5) de Story (9:16), mais legenda de Instagram de verdade.
+- **Copy do WhatsApp no formato do dono** (`src/lib/copy/slots.ts` / `gerador.ts`): abertura / *nome* / 🏷️ De / 💰 Por / 🎯 Desconto / 🔗 Link / fechamento. O "de" (preço antes da promo) **não vem da API** — a Shopee só manda `priceDiscountRate`; `precoAntes()` calcula `preco / (1 - taxa/100)` e devolve `null` se a taxa for ≤0, ≥100 ou a diferença < R$ 0,50. O dono foi avisado que a API às vezes reporta desconto inflado (−90% no catálogo real) e optou por usar assim mesmo.
+- **Legenda de Instagram por IA** (`src/lib/copy/legenda.ts`): OpenRouter com cascata de modelos `:free`, timeout 25s, cai em `legendaLocal()` se falhar. Cache **por produto no banco** (`legenda`, `legenda_em` na tabela `produtos`, migration `0003`), não por clique — teto de custo previsível. Chave `OPENROUTER_API_KEY` só em `.env.local` (fora do git). **O dono precisa rotacionar a chave** — ela passou pelo chat.
+- **Hashtags por nicho** (`src/lib/copy/hashtags.ts`): `hashtagsDoNicho()` com base fixa de achadinho + set por nicho. Beleza é dividida por heurística de nome (`barbe|barba|navalha|masculin|homem…`) entre cuidados femininos (#skincare, #maquiagem) e barba/masculino (#barba, #cuidadomasculino) — o caso que motivou: um barbeador saía com #maquiagem. A heurística masculina só roda dentro de Beleza.
+- **Bug do compartilhar no mobile** (`src/lib/imagem/useGerador.ts`): "Compartilhar imagem" baixava o arquivo em vez de abrir a folha nativa. Causa: a Web Share API exige *transient user activation* e o `await fetch` da geração da imagem, feito depois do clique, já invalidava o gesto → `NotAllowedError` → fallback pro download. Agora a imagem é gerada **antes** do clique (blob pronto em estado, derivado de uma chave `itemId|template|foto`); o `onClick` só chama `navigator.share` com o blob já pronto. Verificado no desktop (Chrome abre a folha nativa, não baixa). **Falta o dono confirmar num celular real.**
+- **Fonte do preço/nome nas imagens**: iterou bastante (Times→Tahoma→Baloo→Nunito). Decisão final: **Nunito Black (peso 900)** no preço e no nome — o dono queria mais peso que a Baloo 2, que para em 800. Archivo Black e Montserrat Black ficaram disponíveis em `FONTES_DISPLAY` pra artes futuras. No feed o "R$" sai (o "APENAS:" logo acima já enquadra o número e a linha extra roubava altura); nos stories o "R$" fica (linha única ao lado de "Apenas:", com espaço de sobra). `@font-face` das três em `globals.css` só pro preview do modal; a rota `/api/imagem` carrega os `.woff` por conta própria.
+- **Ponto 8 — enviar a própria foto**: mantido do que já estava; `renderTemplate` aceita 3º arg opcional de imagem, 100% client-side.
+
 ## Roadmap combinado com o dono do produto (ordem de execução)
 
 1. ~~Fase 1 — Legal + Pixel + segurança~~ ✅
 2. ~~Fase 2 — Robustez técnica~~ ✅
-3. **Fase 3 — Templates de imagem no Canva**, deixando selecionável pro usuário dentro do app (troca dos 3 templates HTML/CSS atuais, ou complementando).
+3. ~~Fase 3 — Templates de imagem no Canva~~ ✅ (ver "Sessão 01/09/2026"): 4 molduras (2 feed, 2 story) desenhadas no Canva e montadas via satori, selecionáveis na aba Instagram.
 4. **Fase 4 — Logo simples** pro produto (hoje é só o texto "EitaPromo" + ícone gerado via `next/og`).
 5. **Fase 5 — Copy & Criativo** (🔄 quase lá — ver "Sessão 31/08/2026"): melhorias de app/funil e a landing nova (com demo real do app) feitas e commitadas; falta só o material de anúncio (variações de copy e roteiros de Reels pro @homidapromo) e uma passada de olho na landing/funil no celular de verdade.
 6. **Fase 6 — Campanha paga**: verba de teste R$20-50/dia por 1-2 semanas antes de escalar, pelo Instagram **@homidapromo**. Execução: o agente opera o gerenciador de anúncios pelo navegador com o dono do produto acompanhando — nenhum clique que comprometa orçamento é feito sem confirmação em tempo real. Ver "Integração Meta Ads" abaixo pro caminho de acesso (conta de anúncios pessoal está desativada).

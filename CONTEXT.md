@@ -19,7 +19,13 @@ _Avoid_: Categoria (esse termo designa a taxonomia da Shopee, não a nossa), tag
 O array `productCatIds` que a Shopee devolve para um Produto: os IDs numéricos de categoria do nível 1 ao 3, do mais geral ao mais específico. É a fonte de verdade a partir da qual o Nicho é derivado.
 
 **Template de Copy**:
-Conjunto de quatro slots (Abertura, Benefício, Urgência, Fechamento), cada um com um array de variações; o sorteio de uma variação por slot gera uma copy única.
+A copy de WhatsApp: uma abertura e um fechamento sorteados (arrays de variações em `src/lib/copy/slots.ts`, com anti-repetição consecutiva) em volta de um miolo fixo — *nome* em negrito, 🏷️ De / 💰 Por / 🎯 Desconto (o "De" é calculado de `preco / (1 - taxa/100)`, some se a taxa for inválida ou o abatimento < R$ 0,50) e 🔗 o link colado pelo usuário. Há duas listas de abertura, com e sem desconto.
+
+**Legenda de Instagram**:
+Texto gerado por IA (OpenRouter, modelos `:free`) pra aba Instagram, com fallback local se a chamada falhar. Cache por Produto no banco (colunas `legenda`, `legenda_em`), não por clique. Sai com Hashtags do nicho.
+
+**Hashtags**:
+Conjunto de hashtags por Nicho (`src/lib/copy/hashtags.ts`), base fixa de achadinho mais um set por nicho. Beleza se divide por heurística de nome do Produto entre cuidados femininos e barba/masculino.
 
 **Template Visual**:
 Um layout que gera a imagem de divulgação (Feed 4:5 ou Story 9:16) no estilo "achadinho" — preço em destaque, uma foto (a do Produto por padrão, ou uma que o usuário enviou) e enfeites fixos. Montado pelo satori/next-og no servidor (rota `/api/imagem`), não no DOM — o html2canvas embaralhava o texto com fonte forte.

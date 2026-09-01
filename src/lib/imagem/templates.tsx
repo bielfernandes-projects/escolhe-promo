@@ -110,6 +110,8 @@ type Moldura = {
     layout: "empilhado" | "linha";
     /** Só usado no layout empilhado. */
     tamanhoMoeda?: number;
+    /** false esconde o "R$" e deixa só o número. */
+    moeda?: boolean;
     /** Família da fonte; escolhida pra combinar com a letra da arte. */
     fonte: FonteDisplay;
   };
@@ -124,13 +126,24 @@ type Moldura = {
  * Bitstream Vera, desenhada como equivalente livre da família Verdana/Tahoma —
  * mesma pegada sólida e quadrada, sem o arredondado da Baloo.
  */
-export type FonteDisplay = "Anton" | "Titan One" | "Baloo 2" | "DejaVu Sans";
+export type FonteDisplay =
+  | "Anton"
+  | "Titan One"
+  | "Baloo 2"
+  | "DejaVu Sans"
+  | "Nunito"
+  | "Archivo Black"
+  | "Montserrat";
 
 export const FONTES_DISPLAY: Record<FonteDisplay, string> = {
   Anton: "anton.woff",
   "Titan One": "titan-one.woff",
   "Baloo 2": "baloo2.woff",
   "DejaVu Sans": "dejavu-bold.woff",
+  // Pesos 900 / Black: mais cheias que a Baloo 2, que para em 800.
+  Nunito: "nunito-black.woff",
+  "Archivo Black": "archivo-black.woff",
+  Montserrat: "montserrat-black.woff",
 };
 
 /** Quanto cada família ocupa por dígito, em em. Usado pra achar o tamanho. */
@@ -139,6 +152,9 @@ const LARGURA_DIGITO: Record<FonteDisplay, number> = {
   "Titan One": 0.62,
   "Baloo 2": 0.58,
   "DejaVu Sans": 0.7,
+  Nunito: 0.6,
+  "Archivo Black": 0.68,
+  Montserrat: 0.68,
 };
 
 /**
@@ -155,27 +171,38 @@ const LARGURA_DIGITO: Record<FonteDisplay, number> = {
  * y 1395..1485), onde sobra largura pra uma linha só.
  */
 const FEED_FOTO: Slot = { x: 249, y: 433, largura: 589, altura: 559, rot: -4.7 };
-// O nome do produto saiu das imagens a pedido do dono — a foto já mostra o que
-// é, e o texto competia com o preço. A tarja branca da arte fica limpa, como um
-// polaroid em branco.
+/** Nome do produto na tarja branca do polaroid, seguindo a inclinação da arte. */
+const FEED_NOME = {
+  x: 312,
+  y: 1006,
+  largura: 520,
+  altura: 84,
+  rot: -4.7,
+  tamanho: 27,
+  cor: "#141414",
+  maxChars: 54,
+  fonte: "Nunito",
+} as const;
+
 /**
- * O preço ocupa a tarja branca do polaroid, que ficou livre quando o nome saiu.
+ * Preço embaixo do "APENAS:" da arte, que é pra onde a seta aponta.
  *
- * Na coluna do "APENAS:" só cabem ~256px de largura, e nela a DejaVu (mais
- * larga que a Baloo anterior) espremia o preço pra ~81px — menor do que era
- * antes, o oposto do pedido. Na tarja há 520px, o que leva o preço a ~150px.
- * A seta do "APENAS:" continua apontando pro polaroid, então a leitura fecha.
+ * Sem o "R$": o "APENAS:" logo acima já enquadra o número, e a linha extra
+ * roubava altura sem acrescentar informação. A largura fica folgada de
+ * propósito — o polaroid começa em x≈280 nessa altura, e com o slot cheio o
+ * número encostava na moldura dourada.
+ *
+ * Nunito Black (peso 900): mais cheia que a Baloo 2, que para em 800.
  */
 const FEED_PRECO = {
-  x: 312,
-  y: 1004,
-  largura: 520,
-  rot: -4.7,
-  alinhar: "centro",
+  x: 20,
+  y: 1000,
+  largura: 232,
   cor: "#141414",
-  tamanhoMax: 150,
-  layout: "linha",
-  fonte: "DejaVu Sans",
+  tamanhoMax: 104,
+  moeda: false,
+  layout: "empilhado",
+  fonte: "Nunito",
 } as const;
 
 const STORY_FOTO: Slot = { x: 105, y: 465, largura: 870, altura: 866 };
@@ -186,7 +213,7 @@ export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
     largura: 1080,
     altura: 1350,
     foto: FEED_FOTO,
-
+    nome: FEED_NOME,
     preco: FEED_PRECO,
   },
   "feed-2": {
@@ -194,7 +221,7 @@ export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
     largura: 1080,
     altura: 1350,
     foto: FEED_FOTO,
-
+    nome: FEED_NOME,
     preco: FEED_PRECO,
   },
   "story-1": {
@@ -210,7 +237,7 @@ export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
       cor: "#ffffff",
       tamanhoMax: 104,
       layout: "linha",
-      fonte: "DejaVu Sans",
+      fonte: "Nunito",
     },
   },
   "story-2": {
@@ -226,7 +253,7 @@ export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
       cor: "#1800ad",
       tamanhoMax: 104,
       layout: "linha",
-      fonte: "DejaVu Sans",
+      fonte: "Nunito",
     },
   },
 };
@@ -333,7 +360,7 @@ function ImagemComMoldura({
           color: moldura.preco.cor,
         }}
       >
-        {empilhado && (
+        {empilhado && (moldura.preco.moeda ?? true) && (
           <div style={{ fontSize: moldura.preco.tamanhoMoeda ?? 44, lineHeight: 1 }}>
             R$
           </div>

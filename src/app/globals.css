@@ -34,6 +34,27 @@
   font-display: swap;
   src: url("/fonts/dejavu-bold.woff") format("woff");
 }
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/nunito-black.woff") format("woff");
+}
+@font-face {
+  font-family: "Archivo Black";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/archivo-black.woff") format("woff");
+}
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/montserrat-black.woff") format("woff");
+}
 
 /*
  * A Geist é carregada no layout como variável CSS. Antes havia um

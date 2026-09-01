@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { entrarComSenha as entrarComSenhaAction } from "./acoes";
 
-type Modo = "senha" | "link";
+type Modo = "senha" | "link" | "recuperar";
 
 const MENSAGENS_DE_ERRO: Record<string, string> = {
   link_invalido: "Esse link não é válido. Peça um novo abaixo.",
@@ -23,16 +23,14 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
     erroInicial ? (MENSAGENS_DE_ERRO[erroInicial] ?? "Não deu pra entrar.") : null,
   );
   const [linkEnviado, setLinkEnviado] = useState(false);
+  const [recuperarEnviado, setRecuperarEnviado] = useState(false);
 
   async function entrarComSenha() {
-    // Server action, nao chamada direta pro Supabase: e o unico jeito de o
-    // rate limit de tentativas realmente ver essa requisicao.
     const resultado = await entrarComSenhaAction(email, senha);
     if (!resultado.ok) {
       setErro(resultado.erro ?? "Não deu pra entrar.");
       return;
     }
-    // refresh() faz o servidor reler o cookie recém-gravado antes de navegar.
     router.refresh();
     router.push("/app/vitrine");
   }
@@ -52,13 +50,26 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
     setLinkEnviado(true);
   }
 
+  async function recuperarSenha() {
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/confirm?type=recovery&next=/app/configuracoes`,
+    });
+    if (error) {
+      setErro(error.message);
+      return;
+    }
+    setRecuperarEnviado(true);
+  }
+
   async function aoEnviar(evento: React.FormEvent) {
     evento.preventDefault();
     setCarregando(true);
     setErro(null);
     try {
       if (modo === "senha") await entrarComSenha();
-      else await enviarLink();
+      else if (modo === "link") await enviarLink();
+      else await recuperarSenha();
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
     } finally {
@@ -66,7 +77,7 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
     }
   }
 
-  if (linkEnviado) {
+  if (linkEnviado || recuperarEnviado) {
     return (
       <div className="rounded-3xl bg-superficie p-6 text-center shadow-[0_20px_60px_-24px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06]">
         <div className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-emerald-50 text-emerald-700">
@@ -74,12 +85,19 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
             <path d="M20 6 9 17l-5-5" />
           </svg>
         </div>
-        <h2 className="mt-3 text-lg font-semibold">Link enviado</h2>
+        <h2 className="mt-3 text-lg font-semibold">
+          {recuperarEnviado ? "Link de recuperação enviado" : "Link enviado"}
+        </h2>
         <p className="mt-2 text-sm text-tinta-fraca">
-          Abra seu e-mail e toque no link pra entrar. Pode fechar esta página.
+          {recuperarEnviado
+            ? "Abra seu e-mail e clique no link pra criar uma nova senha."
+            : "Abra seu e-mail e toque no link pra entrar. Pode fechar esta página."}
         </p>
         <button
-          onClick={() => setLinkEnviado(false)}
+          onClick={() => {
+            setLinkEnviado(false);
+            setRecuperarEnviado(false);
+          }}
           className="mt-4 text-sm font-semibold text-marca-700 underline underline-offset-4"
         >
           Usar outro e-mail
@@ -93,8 +111,8 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
       onSubmit={aoEnviar}
       className="rounded-3xl bg-superficie p-6 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06]"
     >
-      <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-tela p-1">
-        {(["senha", "link"] as const).map((opcao) => (
+      <div className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-tela p-1">
+        {(["senha", "link", "recuperar"] as const).map((opcao) => (
           <button
             key={opcao}
             type="button"
@@ -102,13 +120,13 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
               setModo(opcao);
               setErro(null);
             }}
-            className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+            className={`rounded-lg px-2 py-2 text-xs font-semibold transition-colors ${
               modo === opcao
                 ? "bg-superficie text-tinta shadow-sm"
                 : "text-tinta-fraca"
             }`}
           >
-            {opcao === "senha" ? "Com senha" : "Link no e-mail"}
+            {opcao === "senha" ? "Senha" : opcao === "link" ? "Link" : "Recuperar"}
           </button>
         ))}
       </div>
@@ -161,16 +179,20 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
         className="mt-5 w-full rounded-xl bg-marca-700 px-4 py-3.5 font-semibold text-white transition-all hover:bg-marca-600 active:scale-[0.99] disabled:opacity-60"
       >
         {carregando
-          ? "Entrando..."
+          ? "Aguarde..."
           : modo === "senha"
-            ? "Entrar"
-            : "Receber link por e-mail"}
+          ? "Entrar"
+          : modo === "link"
+          ? "Receber link por e-mail"
+          : "Enviar link de recuperação"}
       </button>
 
       <p className="mt-4 text-center text-xs text-tinta-fraca">
         {modo === "senha"
-          ? "Esqueceu a senha? Use a aba “Link no e-mail”."
-          : "Você recebe um link e entra sem digitar senha."}
+          ? 'Esqueceu a senha? Use a aba "Recuperar".'
+          : modo === "link"
+          ? "Você recebe um link e entra sem digitar senha."
+          : "Você recebe um link pra criar uma nova senha."}
       </p>
     </form>
   );

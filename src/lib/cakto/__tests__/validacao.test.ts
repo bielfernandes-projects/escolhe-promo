@@ -1,65 +1,59 @@
-import { createHmac } from "node:crypto";
 import { describe, it, expect } from "vitest";
-import { validarAssinaturaCakto, validarPayloadCakto } from "../validacao";
+import { segredoConfere, validarPayloadCakto } from "../validacao";
 
-const SECRET = "segredo-de-teste";
+const SECRET = "ef9da319-dceb-41ac-905d-8cc8479368f9";
 
-function assinar(corpo: string, secret = SECRET) {
-  return createHmac("sha256", secret).update(corpo).digest("hex");
-}
+const payloadValido = {
+  secret: SECRET,
+  event: "purchase_approved",
+  data: {
+    id: "87956abe-940e-4e8b-8a27-82c482920f64",
+    baseAmount: 47,
+    customer: { name: "John Doe", email: "john.doe@example.com" },
+    product: { id: "ff3", name: "Escolhe Promo" },
+  },
+};
 
-describe("validarAssinaturaCakto", () => {
-  const corpo = JSON.stringify({ order_id: "123" });
-
-  it("aceita uma assinatura HMAC valida", () => {
-    expect(validarAssinaturaCakto(corpo, assinar(corpo), SECRET)).toBe(true);
+describe("segredoConfere", () => {
+  it("aceita o segredo certo", () => {
+    expect(segredoConfere(SECRET, SECRET)).toBe(true);
   });
 
-  it("rejeita assinatura de corpo diferente (corpo alterado em transito)", () => {
-    const assinaturaDoOutroCorpo = assinar(JSON.stringify({ order_id: "999" }));
-    expect(validarAssinaturaCakto(corpo, assinaturaDoOutroCorpo, SECRET)).toBe(false);
+  it("rejeita segredo errado (mesmo tamanho)", () => {
+    expect(segredoConfere("ef9da319-dceb-41ac-905d-8cc8479368f0", SECRET)).toBe(false);
   });
 
-  it("rejeita assinatura assinada com secret errado", () => {
-    expect(validarAssinaturaCakto(corpo, assinar(corpo, "secret-errado"), SECRET)).toBe(false);
-  });
-
-  it("rejeita quando o header nao veio", () => {
-    expect(validarAssinaturaCakto(corpo, null, SECRET)).toBe(false);
+  it("rejeita vazio, null, undefined e não-string", () => {
+    expect(segredoConfere("", SECRET)).toBe(false);
+    expect(segredoConfere(null, SECRET)).toBe(false);
+    expect(segredoConfere(undefined, SECRET)).toBe(false);
+    expect(segredoConfere(42, SECRET)).toBe(false);
   });
 });
 
 describe("validarPayloadCakto", () => {
-  const payloadValido = {
-    id: "evt_1",
-    event: "purchase.completed",
-    created_at: 1700000000,
-    data: {
-      order_id: "123",
-      customer_email: "a@b.com",
-      total_price: 47,
-      currency: "BRL",
-      items: [{ id: "1", name: "x", price: 47, quantity: 1 }],
-    },
-  };
-
-  it("aceita um payload valido", () => {
+  it("aceita o payload real da Cakto", () => {
     expect(validarPayloadCakto(payloadValido)).toBe(true);
   });
 
-  it("rejeita payload sem items (nada foi comprado, esquema quebrado)", () => {
-    expect(
-      validarPayloadCakto({ ...payloadValido, data: { ...payloadValido.data, items: [] } }),
-    ).toBe(false);
-  });
-
-  it("rejeita payload sem customer_email", () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- descartado de proposito
-    const { customer_email, ...semEmail } = payloadValido.data;
+  it("rejeita sem customer.email", () => {
+    const semEmail = { ...payloadValido.data, customer: { name: "John Doe" } };
     expect(validarPayloadCakto({ ...payloadValido, data: semEmail })).toBe(false);
   });
 
-  it("rejeita null/undefined/tipos primitivos", () => {
+  it("rejeita sem data.id", () => {
+    const { id, ...semId } = payloadValido.data;
+    void id;
+    expect(validarPayloadCakto({ ...payloadValido, data: semId })).toBe(false);
+  });
+
+  it("rejeita sem secret", () => {
+    const { secret, ...semSecret } = payloadValido;
+    void secret;
+    expect(validarPayloadCakto(semSecret)).toBe(false);
+  });
+
+  it("rejeita null, string e número", () => {
     expect(validarPayloadCakto(null)).toBe(false);
     expect(validarPayloadCakto("string")).toBe(false);
     expect(validarPayloadCakto(42)).toBe(false);

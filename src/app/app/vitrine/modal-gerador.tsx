@@ -22,6 +22,9 @@ type ModalGeradorProps = {
 const PREVIEW_LARGURA_MAX = 240;
 const PREVIEW_ALTURA_MAX = 320;
 
+const emReais = (valor: number) =>
+  valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
 /** Aceita link cru da Shopee ou os encurtadores (shp.ee, s.shopee, shope.ee). */
 function pareceLinkShopee(valor: string): boolean {
   return /shopee\.com\.br|shp\.ee|s\.shopee|shope\.ee/i.test(valor.trim());
@@ -200,7 +203,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
       aria-modal="true"
       aria-label={produto.nome}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-tinta/55 backdrop-blur-sm sm:items-center sm:p-4"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -211,32 +214,55 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
           transform: arrastoY ? `translateY(${arrastoY}px)` : undefined,
           transition: arrastando ? "none" : "transform .2s ease-out",
         }}
-        className="flex max-h-[92vh] w-full max-w-lg flex-col rounded-t-2xl bg-superficie sm:max-h-[88vh] sm:rounded-2xl"
+        className="flex max-h-[92vh] w-full max-w-lg flex-col rounded-t-3xl bg-superficie shadow-2xl sm:max-h-[88vh] sm:rounded-3xl"
       >
         {/* Alcinha de bottom-sheet: arraste pra baixo pra fechar (no celular). */}
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-black/15 sm:hidden" />
 
-        <div className="flex shrink-0 items-start justify-between gap-3 px-5 pt-3 pb-3">
-          <h2 className="line-clamp-2 text-sm font-semibold">{produto.nome}</h2>
+        {/* Cabeçalho: o produto que está sendo divulgado, sempre à vista. */}
+        <div className="flex shrink-0 items-center gap-3 border-b border-black/[0.06] px-4 py-3 sm:px-5">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-tela ring-1 ring-black/[0.06]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={produto.imagemUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="line-clamp-1 text-sm font-semibold text-tinta">
+              {produto.nome}
+            </h2>
+            <p className="mt-0.5 text-xs text-tinta-fraca">
+              <span className="fonte-display text-tinta">
+                {emReais(produto.preco)}
+              </span>
+              <span className="mx-1.5 text-black/20">·</span>
+              você ganha{" "}
+              <span className="font-semibold text-emerald-700">
+                {emReais(produto.comissao)}
+              </span>
+            </p>
+          </div>
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="-mt-1 shrink-0 rounded-full p-2 text-xl leading-none text-tinta-fraca hover:bg-tela"
+            className="-mr-1 shrink-0 rounded-full p-2 text-tinta-fraca transition-colors hover:bg-tela"
           >
-            ✕
+            <FecharIcone className="h-4 w-4" />
           </button>
         </div>
 
         <div
           ref={rolagemRef}
-          className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5"
+          className="flex-1 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-5"
         >
           {/* Passos 1 e 2 — comuns às duas abas. */}
-          <div className="space-y-4 border-b border-black/5 pb-5">
-            <div className="space-y-2">
-              <p className="text-sm font-semibold">
-                <span className="text-marca-700">1.</span> Abra o produto na
-                Shopee
+          <div className="space-y-5 border-b border-black/[0.06] py-5">
+            <div className="space-y-2.5">
+              <p className="flex items-center gap-2 text-sm font-semibold text-tinta">
+                <PassoBadge>1</PassoBadge>
+                Abra o produto na Shopee
               </p>
               <p className="text-xs text-tinta-fraca">
                 Abra, escolha suas opções e copie o <strong>seu</strong> link de
@@ -244,16 +270,20 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
               </p>
               <button
                 onClick={abrirProduto}
-                className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-all hover:bg-marca-700 active:scale-[0.99] active:bg-marca-800"
               >
-                Abrir produto na Shopee 🛒
+                Abrir produto na Shopee
+                <SairIcone className="h-4 w-4" />
               </button>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="meu-link" className="block text-sm font-semibold">
-                <span className="text-marca-700">2.</span> Cole aqui o seu link
-                de afiliado
+              <label
+                htmlFor="meu-link"
+                className="flex items-center gap-2 text-sm font-semibold text-tinta"
+              >
+                <PassoBadge>2</PassoBadge>
+                Cole aqui o seu link de afiliado
               </label>
               <input
                 id="meu-link"
@@ -265,7 +295,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                   if (e.target.value) setUsarLinkDaCasa(false);
                 }}
                 placeholder="https://s.shopee.com.br/..."
-                className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
+                className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none transition-colors focus:border-marca-500"
               />
               {meuLink && !linkValido && (
                 <p className="text-xs text-red-600">
@@ -277,14 +307,14 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                   onClick={() => setUsarLinkDaCasa(true)}
                   className="text-xs font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
                 >
-                  não tenho um link de afiliado →
+                  não tenho um link de afiliado
                 </button>
               ) : (
-                <p className="text-xs text-tinta-fraca">
+                <p className="rounded-lg bg-tela px-3 py-2 text-xs text-tinta-fraca">
                   Ok, vai sair com um link genérico.{" "}
                   <button
                     onClick={() => setUsarLinkDaCasa(false)}
-                    className="font-semibold underline underline-offset-2 hover:text-marca-700"
+                    className="font-semibold text-marca-700 underline underline-offset-2"
                   >
                     colar meu link
                   </button>
@@ -294,22 +324,23 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
           </div>
 
           {/* Passo 3 — onde vai postar. */}
-          <p className="pt-5 pb-2 text-sm font-semibold">
-            <span className="text-marca-700">3.</span> Onde você vai postar?
+          <p className="flex items-center gap-2 pt-5 pb-3 text-sm font-semibold text-tinta">
+            <PassoBadge>3</PassoBadge>
+            Onde você vai postar?
           </p>
 
-          <div className="flex gap-1 border-b border-black/5">
+          <div className="flex gap-1 border-b border-black/[0.06]">
             {(["whatsapp", "instagram"] as const).map((nome) => (
               <button
                 key={nome}
                 onClick={() => setAba(nome)}
-                className={`-mb-px border-b-2 px-3 pb-3 text-sm font-semibold transition-colors ${
+                className={`-mb-px border-b-2 px-3 pb-2.5 text-sm font-semibold transition-colors ${
                   aba === nome
                     ? "border-marca-600 text-marca-700"
-                    : "border-transparent text-tinta-fraca"
+                    : "border-transparent text-tinta-fraca hover:text-tinta"
                 }`}
               >
-                {nome === "whatsapp" ? "WhatsApp 💬" : "Instagram 📸"}
+                {nome === "whatsapp" ? "WhatsApp" : "Instagram"}
               </button>
             ))}
           </div>
@@ -320,12 +351,12 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                 <button
                   onClick={gerarCopyClick}
                   disabled={!podeGerar}
-                  className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-50"
+                  className="w-full rounded-xl bg-marca-700 px-4 py-3.5 font-semibold text-white transition-all hover:bg-marca-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-tinta-fraca"
                 >
-                  {copy ? "Gerar outra mensagem ✨" : "Gerar mensagem ✨"}
+                  {copy ? "Gerar outra mensagem" : "Gerar mensagem"}
                 </button>
                 {!podeGerar && (
-                  <p className="text-xs text-tinta-fraca">
+                  <p className="text-center text-xs text-tinta-fraca">
                     Cole o seu link no passo 2 pra liberar.
                   </p>
                 )}
@@ -342,16 +373,16 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                       className="w-full resize-y rounded-xl border border-black/10 bg-tela p-4 text-sm outline-none focus:border-marca-500"
                     />
                     <p className="text-xs text-tinta-fraca">
-                      Os <code>*asteriscos*</code> viram negrito quando você cola
-                      no WhatsApp.
+                      Os <code className="rounded bg-tela px-1">*asteriscos*</code>{" "}
+                      viram negrito quando você cola no WhatsApp.
                     </p>
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(copy)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block w-full rounded-xl bg-[#25D366] px-4 py-3.5 text-center font-semibold text-white transition-colors hover:opacity-90"
+                      className="block w-full rounded-xl bg-[#25D366] px-4 py-3.5 text-center font-semibold text-white transition-opacity hover:opacity-90"
                     >
-                      Enviar no WhatsApp 💬
+                      Enviar no WhatsApp
                     </a>
                     <button
                       onClick={() => copiarTexto(copy, "copy")}
@@ -361,7 +392,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                           : "bg-tela text-tinta hover:bg-black/5"
                       }`}
                     >
-                      {copiado === "copy" ? "Copiado! ✅" : "Copiar 📋"}
+                      {copiado === "copy" ? "Copiado!" : "Copiar mensagem"}
                     </button>
                   </>
                 )}
@@ -369,7 +400,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="template" className="block text-sm font-semibold">
+                  <label htmlFor="template" className="block text-sm font-semibold text-tinta">
                     Modelo da imagem
                   </label>
                   <select
@@ -397,7 +428,9 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
 
                 {/* Foto: a do produto (padrao) ou uma que o usuario mandar. */}
                 <div className="space-y-2">
-                  <span className="block text-sm font-semibold">Foto da imagem</span>
+                  <span className="block text-sm font-semibold text-tinta">
+                    Foto da imagem
+                  </span>
                   <div className="flex flex-wrap items-center gap-2">
                     <label className="cursor-pointer rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5">
                       {fotoPropria ? "Trocar minha foto" : "Usar uma foto minha"}
@@ -424,7 +457,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                   )}
                 </div>
 
-                <div className="flex justify-center rounded-xl bg-tela p-4">
+                <div className="flex justify-center rounded-2xl bg-tela p-4">
                   <div
                     style={{ width: preview.largura, height: preview.altura }}
                     className="overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5"
@@ -464,13 +497,13 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                 <button
                   onClick={() => compartilhar(legenda || undefined)}
                   disabled={!pronta}
-                  className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-60"
+                  className="w-full rounded-xl bg-marca-700 px-4 py-3.5 font-semibold text-white transition-all hover:bg-marca-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-tinta-fraca"
                 >
                   {!pronta
                     ? "Preparando imagem…"
                     : entregue
-                      ? "Pronto! ✅"
-                      : "Compartilhar imagem 📸"}
+                      ? "Pronto!"
+                      : "Compartilhar imagem"}
                 </button>
                 <button
                   onClick={() => baixar()}
@@ -481,8 +514,8 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                 </button>
 
                 {/* Legenda pra colar junto do post. */}
-                <div className="space-y-2 border-t border-black/5 pt-4">
-                  <label htmlFor="legenda" className="block text-sm font-semibold">
+                <div className="space-y-2 border-t border-black/[0.06] pt-4">
+                  <label htmlFor="legenda" className="block text-sm font-semibold text-tinta">
                     Legenda pro post
                   </label>
                   {legenda ? (
@@ -502,7 +535,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                             : "bg-tela text-tinta hover:bg-black/5"
                         }`}
                       >
-                        {copiado === "legenda" ? "Copiado! ✅" : "Copiar legenda 📋"}
+                        {copiado === "legenda" ? "Copiado!" : "Copiar legenda"}
                       </button>
                     </>
                   ) : (
@@ -511,7 +544,7 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                       disabled={gerandoLegenda}
                       className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5 disabled:opacity-60"
                     >
-                      {gerandoLegenda ? "Escrevendo a legenda…" : "Gerar legenda ✨"}
+                      {gerandoLegenda ? "Escrevendo a legenda…" : "Gerar legenda"}
                     </button>
                   )}
                   {erroLegenda && (
@@ -526,5 +559,46 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+function PassoBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-marca-100 text-[11px] font-bold text-marca-700">
+      {children}
+    </span>
+  );
+}
+
+function FecharIcone({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  );
+}
+
+function SairIcone({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M7 17 17 7M8 7h9v9" />
+    </svg>
   );
 }

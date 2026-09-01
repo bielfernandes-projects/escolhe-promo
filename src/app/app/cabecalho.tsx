@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -6,7 +6,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Marca } from "@/app/_brand/marca";
 
-export function Cabecalho({ email }: { email: string }) {
+export function Cabecalho() {
   const router = useRouter();
   const pathname = usePathname();
   const [saindo, setSaindo] = useState(false);
@@ -27,13 +27,14 @@ export function Cabecalho({ email }: { email: string }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-black/5 bg-superficie/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-superficie/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <Link href="/app" aria-label="Eita Promo" className="shrink-0">
-            {/* Só o símbolo no celular: o nome ao lado brigava com a aba "Vitrine". */}
-            <Marca texto="hidden text-base sm:inline" />
-          </Link>
+        <Link href="/app" aria-label="Escolhe Promo" className="shrink-0">
+          {/* Só o símbolo no celular: o nome ao lado apertava a barra. */}
+          <Marca simbolo={30} texto="hidden text-base sm:inline" />
+        </Link>
+
+        <nav className="flex shrink-0 items-center gap-1">
           <Link
             href="/app/vitrine"
             aria-current={naVitrine ? "page" : undefined}
@@ -48,12 +49,7 @@ export function Cabecalho({ email }: { email: string }) {
           >
             Configurações
           </Link>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="hidden max-w-[16ch] truncate text-xs text-tinta-fraca sm:block">
-            {email}
-          </span>
+          <span aria-hidden className="mx-1 h-4 w-px bg-black/10" />
           <button
             onClick={sair}
             disabled={saindo}
@@ -61,7 +57,7 @@ export function Cabecalho({ email }: { email: string }) {
           >
             {saindo ? "Saindo..." : "Sair"}
           </button>
-        </div>
+        </nav>
       </div>
     </header>
   );

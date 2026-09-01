@@ -25,7 +25,7 @@ export default async function AppLayout({
 
   return (
     <>
-      <Cabecalho email={user.email ?? ""} />
+      <Cabecalho />
       {children}
     </>
   );

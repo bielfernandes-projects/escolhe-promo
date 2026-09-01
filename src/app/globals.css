@@ -56,14 +56,12 @@
   src: url("/fonts/montserrat-black.woff") format("woff");
 }
 
-/*
- * A Geist é carregada no layout como variável CSS. Antes havia um
- * `font-family: Arial` fixo no body que sobrescrevia tudo — o app inteiro
- * renderizava em Arial e a fonte baixada nunca aparecia.
- */
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Bricolage Grotesque, carregada no layout (--font-display-raw). Fallback
+     numa grotesca de sistema pra não desabar em Times se a variável faltar. */
+  --font-display: var(--font-display-raw), "Segoe UI", system-ui, sans-serif;
 
   /* Laranja da Shopee: o público já associa essa cor a "comprar". */
   --color-marca-50: #fff5f2;
@@ -77,16 +75,24 @@
   --color-marca-800: #a2321d;
   --color-marca-900: #862e1c;
 
-  --color-tela: #f7f7f8;
+  --color-tela: #f6f6f7;
   --color-superficie: #ffffff;
-  --color-tinta: #18181b;
-  --color-tinta-fraca: #52525b;
+  --color-tinta: #1a1614;
+  --color-tinta-fraca: #57514d;
+  /* Fundo "molhado" do fechamento: laranja levado ao quase-preto. */
+  --color-brasa: #2a0f07;
 }
 
 body {
   background-color: var(--color-tela);
   color: var(--color-tinta);
   -webkit-font-smoothing: antialiased;
+}
+
+.fonte-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  font-weight: 800;
 }
 
 /*
@@ -122,6 +128,7 @@ textarea {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
@@ -131,61 +138,78 @@ textarea {
  * sempre foi — nunca depende da animação pra aparecer.
  */
 @supports (animation-timeline: view()) {
-  .lp-reveal {
-    animation: lp-rise linear both;
-    animation-timeline: view();
-    /* Termina enquanto a seção ainda está entrando: assim ela nunca fica
-       invisível quando ocupa o centro da tela (o range até `cover` deixava
-       seções curtas presas em opacity 0). */
-    animation-range: entry 0% entry 90%;
+  @media (prefers-reduced-motion: no-preference) {
+    .lp-reveal {
+      animation: lp-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 85%;
+    }
   }
 }
+/* Só um empurrãozinho — sem opacity, pra o conteúdo nunca ficar invisível se a
+   view-timeline não recalcular a tempo (scroll programático, aba oculta). */
 @keyframes lp-rise {
   from {
-    opacity: 0;
     transform: translateY(1.5rem);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lp-reveal {
-    animation: none;
-    opacity: 1;
-    transform: none;
   }
 }
 
 /*
- * O único momento coreografado da página: as telas do app entram em cascata
- * quando o herói carrega. Ease-out exponencial, a partir de um estado que já
- * é legível (o conteúdo nunca depende disso pra existir).
+ * MOMENTO-ASSINATURA: a peça central da montagem é o preço que "carimba" sobre
+ * a copy quando a página carrega — o gesto de "copiou, postou, vendeu".
+ * Tudo na montagem é visível por padrão (o print da Vitrine é o LCP e nunca
+ * depende de animação); só o preço e o selo têm um movimento de entrada, e o
+ * estado final deles já é o estado em repouso, então sob prefers-reduced-motion
+ * ou se a animação não disparar, nada se perde.
  */
-@keyframes lp-cascata {
-  from {
+.lp-montagem [data-preco] {
+  transform: rotate(-3deg);
+}
+.lp-montagem [data-selo] {
+  transform: rotate(6deg);
+}
+
+@keyframes lp-carimbo {
+  0% {
+    transform: scale(1.28) rotate(-3deg);
+  }
+  60% {
+    transform: scale(0.94) rotate(-3deg);
+  }
+  100% {
+    transform: scale(1) rotate(-3deg);
+  }
+}
+@keyframes lp-selo {
+  0% {
     opacity: 0;
-    transform: translateY(2rem) scale(0.97);
-    filter: blur(6px);
+    transform: scale(0.4) rotate(6deg);
   }
-  to {
+  60% {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: scale(1.15) rotate(6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(6deg);
   }
 }
-.lp-cascata > * {
-  animation: lp-cascata 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+@media (prefers-reduced-motion: no-preference) {
+  .lp-montagem [data-preco] {
+    animation: lp-carimbo 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s both;
+  }
+  .lp-montagem [data-selo] {
+    animation: lp-selo 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both;
+  }
 }
-.lp-cascata > *:nth-child(2) {
-  animation-delay: 0.12s;
-}
-.lp-cascata > *:nth-child(3) {
-  animation-delay: 0.24s;
-}
+
 @media (prefers-reduced-motion: reduce) {
-  .lp-cascata > * {
-    animation: none;
+  .lp-reveal {
+    opacity: 1;
+    transform: none;
   }
 }

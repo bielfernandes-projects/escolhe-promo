@@ -3,6 +3,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Produto } from "./tipos";
+import { deduplicarProdutos } from "./dedupe";
 import type { Nicho } from "@/lib/shopee/niches";
 
 /** A Vitrine no formato em que o Postgres guarda (snake_case). */
@@ -72,14 +73,16 @@ export async function listarProdutos(limite = 700): Promise<Produto[]> {
   const { data, error } = await supabase
     .from("produtos")
     .select("*")
+    // Puxa uma folga alem do limite: a deduplicacao corta linhas e sem folga o
+    // resultado final ficaria abaixo do pedido.
     .order("comissao", { ascending: false })
-    .limit(limite);
+    .limit(Math.ceil(limite * 1.5));
 
   if (error) {
     throw new Error(`Nao deu pra ler a Vitrine: ${error.message}`);
   }
 
-  return (data as LinhaProduto[]).map(deLinha);
+  return deduplicarProdutos((data as LinhaProduto[]).map(deLinha)).slice(0, limite);
 }
 
 /**

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FormularioLogin } from "./formulario-login";
@@ -20,12 +20,17 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { erro } = await searchParams;
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
+    <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-10 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-marca-200/45 blur-[90px]"
+      />
+
       <div className="mb-8 text-center">
-        <Link href="/" aria-label="Eita Promo" className="inline-flex">
-          <Marca simbolo={32} texto="text-2xl" />
+        <Link href="/" aria-label="Escolhe Promo" className="inline-flex">
+          <Marca simbolo={36} texto="text-2xl" />
         </Link>
-        <p className="mt-2 text-sm text-tinta-fraca">
+        <p className="mt-3 text-sm text-tinta-fraca">
           Entre pra acessar sua Vitrine do dia.
         </p>
       </div>
@@ -34,7 +39,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
       <p className="mt-6 text-center text-sm text-tinta-fraca">
         Ainda não tem acesso?{" "}
-        <Link href="/" className="font-semibold text-marca-600 underline underline-offset-4">
+        <Link href="/" className="font-semibold text-marca-700 underline underline-offset-4">
           Ver a oferta
         </Link>
       </p>

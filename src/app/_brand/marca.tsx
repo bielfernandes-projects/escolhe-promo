@@ -1,7 +1,7 @@
-import type { CSSProperties } from "react";
+﻿import type { CSSProperties } from "react";
 
 /**
- * Identidade do Eita Promo num lugar só — cabeçalho do app, cabeçalho e rodapé
+ * Identidade do Escolhe Promo num lugar só — cabeçalho do app, cabeçalho e rodapé
  * da landing e a tela de login puxam daqui.
  *
  * O símbolo é a arte feita no Canva: um balão de conversa (WhatsApp) em forma
@@ -23,7 +23,7 @@ export function MarcaSimbolo({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src="/icon.png"
-      alt="Eita Promo"
+      alt="Escolhe Promo"
       width={size}
       height={size}
       style={{ borderRadius: size * 0.28, display: "block", ...style }}
@@ -31,7 +31,7 @@ export function MarcaSimbolo({
   );
 }
 
-/** "Eita Promo" — "Eita" na tinta, "Promo" no laranja da marca. */
+/** "Escolhe Promo" — "Eita" na tinta, "Promo" no laranja da marca. */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={`font-bold tracking-tight ${className ?? ""}`}>

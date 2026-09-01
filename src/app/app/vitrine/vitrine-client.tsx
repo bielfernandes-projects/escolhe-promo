@@ -57,14 +57,14 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
 
   return (
     <main className="flex-1 pb-16">
-      <header className="border-b border-black/5 bg-superficie">
-        <div className="mx-auto w-full max-w-6xl px-4 pt-5 pb-3">
-          <div className="flex items-start justify-between gap-3">
+      <header className="border-b border-black/[0.06] bg-superficie">
+        <div className="mx-auto w-full max-w-6xl px-4 pt-6 pb-3">
+          <div className="flex items-end justify-between gap-3">
             <div>
-              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+              <h1 className="fonte-display text-2xl text-tinta sm:text-[26px]">
                 Vitrine do dia
               </h1>
-              <p className="mt-0.5 text-sm text-tinta-fraca">
+              <p className="mt-1 text-sm text-tinta-fraca">
                 {ordenados.length > LIMITE
                   ? `Mostrando ${inicio + 1}–${inicio + visiveis.length} de ${ordenados.length} produtos`
                   : `${ordenados.length} ${ordenados.length === 1 ? "produto" : "produtos"} pra divulgar hoje`}
@@ -76,7 +76,7 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
               <select
                 value={ordenacao}
                 onChange={(e) => trocarOrdenacao(e.target.value as Ordenacao)}
-                className="rounded-lg border border-black/10 bg-superficie px-2.5 py-1.5 text-xs font-semibold text-tinta outline-none focus:border-marca-500 sm:px-3 sm:py-2 sm:text-sm"
+                className="rounded-xl border border-black/10 bg-superficie px-2.5 py-2 text-xs font-semibold text-tinta outline-none focus:border-marca-500 sm:px-3 sm:text-sm"
               >
                 {OPCOES_ORDENACAO.map((opcao) => (
                   <option key={opcao} value={opcao}>
@@ -90,10 +90,10 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
           {ordenados.length > LIMITE && (
             <button
               onClick={() => setPagina((p) => p + 1)}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-marca-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800"
+              className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-marca-50 px-3.5 py-2 text-sm font-semibold text-marca-700 transition-colors hover:bg-marca-100 active:scale-[0.98]"
             >
+              <RecarregarIcone className="h-3.5 w-3.5" />
               Gerar novos produtos
-              <span aria-hidden>↻</span>
             </button>
           )}
         </div>
@@ -111,7 +111,7 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
                 aria-pressed={filtro === chip}
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   filtro === chip
-                    ? "bg-marca-600 text-white"
+                    ? "bg-marca-700 text-white"
                     : "bg-tela text-tinta-fraca hover:bg-marca-50 hover:text-marca-700"
                 }`}
               >
@@ -144,5 +144,23 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
         <ModalGerador produto={selecionado} onClose={() => setSelecionado(null)} />
       )}
     </main>
+  );
+}
+
+function RecarregarIcone({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5" />
+    </svg>
   );
 }

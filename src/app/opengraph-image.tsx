@@ -1,10 +1,10 @@
-import { readFile } from "node:fs/promises";
+﻿import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Eita Promo — copiou, postou, vendeu";
+export const alt = "Escolhe Promo — copiou, postou, vendeu";
 
 /**
  * Cartão de compartilhamento (link no WhatsApp, anúncio, preview no Google).

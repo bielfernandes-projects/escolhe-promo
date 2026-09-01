@@ -1,4 +1,4 @@
-import type { MetadataRoute } from "next";
+﻿import type { MetadataRoute } from "next";
 
 /**
  * Convencao nativa do Next, apontando pros icones estaticos em src/app/
@@ -6,8 +6,8 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Eita Promo",
-    short_name: "Eita Promo",
+    name: "Escolhe Promo",
+    short_name: "Escolhe Promo",
     description:
       "Copiou, postou, vendeu. Gerador de copy e imagens para afiliados Shopee.",
     start_url: "/app/vitrine",

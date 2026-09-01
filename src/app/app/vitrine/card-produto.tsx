@@ -21,7 +21,7 @@ export function CardProduto({ produto, onClick }: CardProdutoProps) {
   return (
     <button
       onClick={() => onClick(produto)}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-superficie text-left shadow-sm ring-1 ring-black/5 transition-shadow hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-2xl bg-superficie text-left ring-1 ring-black/[0.06] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-16px_rgba(196,58,30,0.28)] hover:ring-marca-200"
     >
       <div className="relative aspect-square overflow-hidden bg-tela">
         {imagemQuebrou ? (
@@ -42,34 +42,47 @@ export function CardProduto({ produto, onClick }: CardProdutoProps) {
              */
             crossOrigin="anonymous"
             onError={() => setImagemQuebrou(true)}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
           />
         )}
 
-        <span className="absolute top-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
+        <span className="absolute top-2 left-2 rounded-full bg-tinta/75 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
           {produto.nicho}
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <h3 className="line-clamp-2 text-[13px] leading-snug font-medium">
+      <div className="flex flex-1 flex-col gap-1.5 p-3">
+        <h3 className="line-clamp-2 text-[13px] leading-snug font-medium text-tinta">
           {produto.nome}
         </h3>
 
-        <div className="text-[11px] text-tinta-fraca">
-          ⭐ {produto.avaliacao.toFixed(1)} · {emMilhares(produto.vendas)} vendidos
+        <div className="flex items-center gap-1 text-[11px] text-tinta-fraca">
+          <EstrelaIcone className="h-3 w-3 text-amber-400" />
+          {produto.avaliacao.toFixed(1)}
+          <span className="text-black/20">·</span>
+          {emMilhares(produto.vendas)} vendidos
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-2 pt-1">
-          <div className="text-base font-bold">{emReais(produto.preco)}</div>
-          <div className="shrink-0 rounded-lg bg-emerald-50 px-2 py-1 text-right">
-            <div className="text-[10px] leading-none text-emerald-700">ganha</div>
-            <div className="text-xs leading-tight font-bold text-emerald-700">
+        <div className="mt-auto flex items-end justify-between gap-2 pt-1.5">
+          <div className="fonte-display text-[17px] text-tinta">
+            {emReais(produto.preco)}
+          </div>
+          <div className="shrink-0 rounded-lg bg-emerald-50 px-2 py-1 text-right leading-none">
+            <div className="text-[10px] text-emerald-700/80">você ganha</div>
+            <div className="mt-0.5 text-xs font-bold text-emerald-700">
               {emReais(produto.comissao)}
             </div>
           </div>
         </div>
       </div>
     </button>
+  );
+}
+
+function EstrelaIcone({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9L12 2.5z" />
+    </svg>
   );
 }

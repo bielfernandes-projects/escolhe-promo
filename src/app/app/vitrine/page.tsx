@@ -1,8 +1,8 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { listarProdutos } from "@/lib/produtos/repositorio";
 import { VitrineClient } from "./vitrine-client";
 
-export const metadata = { title: "Vitrine do dia — Eita Promo" };
+export const metadata = { title: "Vitrine do dia — Escolhe Promo" };
 
 /**
  * Server Component de proposito: a Vitrine sai do Supabase, ja filtrada pelo

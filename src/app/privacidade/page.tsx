@@ -1,12 +1,12 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
-export const metadata = { title: "Política de Privacidade — Eita Promo" };
+export const metadata = { title: "Política de Privacidade — Escolhe Promo" };
 
 export default function PrivacidadePage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-12">
       <Link href="/" className="text-sm font-semibold text-marca-600">
-        ← Eita Promo
+        ← Escolhe Promo
       </Link>
       <h1 className="mt-4 text-2xl font-bold tracking-tight">
         Política de Privacidade
@@ -18,10 +18,10 @@ export default function PrivacidadePage() {
           <h2 className="font-bold">1. Controlador dos dados</h2>
           <p>
             <strong>Gabriel Monteiro Fernandes, CPF 074.898.793-29, Fortaleza-CE</strong> é quem decide
-            como seus dados são usados no Eita Promo. Contato do encarregado
+            como seus dados são usados no Escolhe Promo. Contato do encarregado
             (DPO):{" "}
-            <a href="mailto:contato@eitapromo.bf.dev.br" className="text-marca-600 underline">
-              contato@eitapromo.bf.dev.br
+            <a href="mailto:contato@escolhepromo.com.br" className="text-marca-600 underline">
+              contato@escolhepromo.com.br
             </a>
             .
           </p>
@@ -119,7 +119,7 @@ export default function PrivacidadePage() {
           <p>
             Segredos de terceiros que você conecta (App Secret da Shopee) são
             armazenados criptografados. O acesso ao banco é restrito por
-            usuário (Row Level Security) — ninguém, nem o próprio Eita Promo,
+            usuário (Row Level Security) — ninguém, nem o próprio Escolhe Promo,
             consulta seus dados fora do necessário pra operar o serviço.
           </p>
         </section>

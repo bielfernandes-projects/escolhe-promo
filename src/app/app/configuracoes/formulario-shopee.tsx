@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { salvarCredencialShopee } from "./acoes";
@@ -42,13 +42,13 @@ export function FormularioShopee({ appIdSalvo }: Props) {
   return (
     <form
       onSubmit={aoEnviar}
-      className="rounded-2xl bg-superficie p-5 shadow-sm ring-1 ring-black/5"
+      className="rounded-2xl bg-superficie p-5 ring-1 ring-black/[0.06]"
     >
-      <h2 className="font-semibold">Sua API da Shopee</h2>
+      <h2 className="text-base font-bold text-tinta">Sua API da Shopee</h2>
       <p className="mt-1 text-sm text-tinta-fraca">
         {salvo
           ? `Credenciais salvas (App ID: ${salvo}). Os links das suas copies usam sua própria conta de afiliado.`
-          : "Sem credenciais, os links usam a conta padrão do Eita Promo."}
+          : "Sem credenciais, os links usam a conta padrão do Escolhe Promo."}
       </p>
 
       <label htmlFor="app-id" className="mt-3 block text-sm font-semibold">
@@ -57,6 +57,7 @@ export function FormularioShopee({ appIdSalvo }: Props) {
       <input
         id="app-id"
         required
+        autoComplete="off"
         value={appId}
         onChange={(e) => setAppId(e.target.value)}
         placeholder={salvo ?? "Seu App ID da Shopee Affiliate"}
@@ -70,6 +71,7 @@ export function FormularioShopee({ appIdSalvo }: Props) {
         id="app-secret"
         type="password"
         required
+        autoComplete="off"
         value={appSecret}
         onChange={(e) => setAppSecret(e.target.value)}
         placeholder="Seu App Secret da Shopee Affiliate"
@@ -88,7 +90,7 @@ export function FormularioShopee({ appIdSalvo }: Props) {
       <button
         type="submit"
         disabled={carregando}
-        className="mt-4 rounded-xl bg-marca-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-marca-700 disabled:opacity-60"
+        className="mt-4 rounded-xl bg-marca-700 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-marca-600 active:scale-[0.99] disabled:opacity-60"
       >
         {carregando ? "Salvando..." : "Salvar credenciais"}
       </button>

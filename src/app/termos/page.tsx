@@ -1,6 +1,6 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
-export const metadata = { title: "Termos de Uso — Eita Promo" };
+export const metadata = { title: "Termos de Uso — Escolhe Promo" };
 
 /**
  * Rascunho informado por LGPD/CDC, nao revisao juridica — vale como ponto de
@@ -10,7 +10,7 @@ export default function TermosPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-12">
       <Link href="/" className="text-sm font-semibold text-marca-600">
-        ← Eita Promo
+        ← Escolhe Promo
       </Link>
       <h1 className="mt-4 text-2xl font-bold tracking-tight">Termos de Uso</h1>
       <p className="mt-1 text-sm text-tinta-fraca">Última atualização: 25/08/2026</p>
@@ -19,10 +19,10 @@ export default function TermosPage() {
         <section>
           <h2 className="font-bold">1. Quem somos</h2>
           <p>
-            O Eita Promo é um serviço operado por{" "}
+            O Escolhe Promo é um serviço operado por{" "}
             <strong>Gabriel Monteiro Fernandes, CPF 074.898.793-29, Fortaleza-CE</strong>, contato:{" "}
-            <a href="mailto:contato@eitapromo.bf.dev.br" className="text-marca-600 underline">
-              contato@eitapromo.bf.dev.br
+            <a href="mailto:contato@escolhepromo.com.br" className="text-marca-600 underline">
+              contato@escolhepromo.com.br
             </a>
             .
           </p>
@@ -31,7 +31,7 @@ export default function TermosPage() {
         <section>
           <h2 className="font-bold">2. O que o serviço é (e o que não é)</h2>
           <p>
-            O Eita Promo é uma ferramenta de apoio para afiliados da Shopee: ele
+            O Escolhe Promo é uma ferramenta de apoio para afiliados da Shopee: ele
             sugere produtos, gera textos de divulgação e imagens prontas pra
             postar. Ele não garante vendas, comissão, ganho financeiro ou
             resultado de qualquer tipo — o desempenho depende inteiramente de
@@ -66,7 +66,7 @@ export default function TermosPage() {
             da Shopee em Configurações, elas são usadas exclusivamente pra
             gerar seus próprios links de afiliado dentro do app, e ficam
             armazenadas de forma criptografada. Sem essa conexão, os links
-            gerados usam a conta de afiliado do Eita Promo.
+            gerados usam a conta de afiliado do Escolhe Promo.
           </p>
         </section>
 
@@ -84,7 +84,7 @@ export default function TermosPage() {
           <p>
             Os textos e imagens gerados pelo app são seus pra usar livremente
             na divulgação dos produtos. O software, marca e templates
-            continuam propriedade do Eita Promo.
+            continuam propriedade do Escolhe Promo.
           </p>
         </section>
 

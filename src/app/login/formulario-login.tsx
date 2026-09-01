@@ -68,15 +68,19 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
 
   if (linkEnviado) {
     return (
-      <div className="rounded-2xl bg-superficie p-6 text-center shadow-sm ring-1 ring-black/5">
-        <div className="text-4xl">📬</div>
-        <h2 className="mt-3 text-lg font-semibold">Link enviado!</h2>
+      <div className="rounded-3xl bg-superficie p-6 text-center shadow-[0_20px_60px_-24px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06]">
+        <div className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden>
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
+        <h2 className="mt-3 text-lg font-semibold">Link enviado</h2>
         <p className="mt-2 text-sm text-tinta-fraca">
           Abra seu e-mail e toque no link pra entrar. Pode fechar esta página.
         </p>
         <button
           onClick={() => setLinkEnviado(false)}
-          className="mt-4 text-sm font-semibold text-marca-600 underline underline-offset-4"
+          className="mt-4 text-sm font-semibold text-marca-700 underline underline-offset-4"
         >
           Usar outro e-mail
         </button>
@@ -87,7 +91,7 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
   return (
     <form
       onSubmit={aoEnviar}
-      className="rounded-2xl bg-superficie p-6 shadow-sm ring-1 ring-black/5"
+      className="rounded-3xl bg-superficie p-6 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06]"
     >
       <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-tela p-1">
         {(["senha", "link"] as const).map((opcao) => (
@@ -154,7 +158,7 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
       <button
         type="submit"
         disabled={carregando}
-        className="mt-5 w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-60"
+        className="mt-5 w-full rounded-xl bg-marca-700 px-4 py-3.5 font-semibold text-white transition-all hover:bg-marca-600 active:scale-[0.99] disabled:opacity-60"
       >
         {carregando
           ? "Entrando..."

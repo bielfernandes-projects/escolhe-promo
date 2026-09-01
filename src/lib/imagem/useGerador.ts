@@ -9,7 +9,8 @@ export type EstadoCaptura = "ocioso" | "capturando" | "sucesso" | "erro";
 type Entrega = "compartilhar" | "baixar";
 
 export function useGeradorImagem(produto: Produto) {
-  const [templateAtual, setTemplateAtual] = useState<TemplateId>("feed-cartao");
+  const [templateAtual, setTemplateAtual] =
+    useState<TemplateId>("achadinho-do-dia");
   const [estado, setEstado] = useState<EstadoCaptura>("ocioso");
   const [erro, setErro] = useState<string | null>(null);
 

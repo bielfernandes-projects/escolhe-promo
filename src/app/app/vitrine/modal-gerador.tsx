@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Produto } from "@/lib/produtos/tipos";
 import { criarGeradorDeCopy, gerarCopy, type Canal } from "@/lib/copy/gerador";
-import { TEMPLATES, renderTemplate, type TemplateId } from "@/lib/imagem/templates";
+import {
+  TEMPLATES,
+  arquivoDaMoldura,
+  renderTemplate,
+  type TemplateId,
+} from "@/lib/imagem/templates";
 import { useGeradorImagem } from "@/lib/imagem/useGerador";
 import { linkAfiliadoPessoal } from "./link-afiliado";
 
@@ -364,6 +369,9 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                       templateAtual,
                       { nome: produto.nome, preco: produto.preco },
                       fotoPropria ?? produto.imagemUrl,
+                      // No preview a arte é servida pelo /public mesmo; só a
+                      // rota que gera o PNG precisa dela como data URI.
+                      arquivoDaMoldura(templateAtual) ?? undefined,
                     )}
                   </div>
                 </div>

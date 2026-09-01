@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
 /*
- * Fonte display dos Templates Visuais (o "preço gritado" do achadinho). Aqui
- * só serve pro preview no modal; a imagem final é montada pelo satori na rota
- * /api/imagem, que carrega a fonte por conta própria.
+ * Fontes de display dos Templates Visuais (o "preço gritado" do achadinho).
+ * Aqui só servem pro preview no modal; a imagem final é montada pelo satori na
+ * rota /api/imagem, que carrega os mesmos arquivos por conta própria. Manter
+ * esta lista em sincronia com FONTES_DISPLAY em src/lib/imagem/templates.tsx.
  */
 @font-face {
   font-family: "Anton";
@@ -11,6 +12,20 @@
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/anton.woff") format("woff");
+}
+@font-face {
+  font-family: "Titan One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/titan-one.woff") format("woff");
+}
+@font-face {
+  font-family: "Baloo 2";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/baloo2.woff") format("woff");
 }
 
 /*

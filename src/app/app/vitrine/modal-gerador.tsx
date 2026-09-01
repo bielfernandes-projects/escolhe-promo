@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Produto } from "@/lib/produtos/tipos";
-import { criarGeradorDeCopy, gerarCopy, type Canal } from "@/lib/copy/gerador";
+import { criarGeradorDeCopy } from "@/lib/copy/gerador";
 import {
   TEMPLATES,
   arquivoDaMoldura,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/imagem/templates";
 import { useGeradorImagem } from "@/lib/imagem/useGerador";
 import { linkAfiliadoPessoal } from "./link-afiliado";
+import { legendaDoProduto } from "./legenda-acao";
 
 type ModalGeradorProps = {
   produto: Produto;
@@ -27,21 +28,23 @@ function pareceLinkShopee(valor: string): boolean {
 }
 
 export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
-  const [aba, setAba] = useState<"copy" | "imagem">("copy");
+  const [aba, setAba] = useState<"whatsapp" | "instagram">("whatsapp");
 
-  const [canal, setCanal] = useState<Canal>("whatsapp");
   const [copy, setCopy] = useState("");
-  const [copiado, setCopiado] = useState(false);
   const [gerador] = useState(() => criarGeradorDeCopy());
+  /** Qual texto acabou de ser copiado, pra o botão certo dar o feedback. */
+  const [copiado, setCopiado] = useState<"copy" | "legenda" | null>(null);
 
-  // Fluxo em 3 passos: o usuario abre o produto pelo link da casa (Double-Dip),
-  // pega o proprio link de afiliado la na Shopee, cola aqui, e so entao gera a
-  // copy. Quem nao tem link segue pelo escape hatch usando o link da casa.
+  // Os dois primeiros passos valem pras duas abas, por isso ficam acima delas:
+  // o usuário abre o produto pelo link da casa (Double-Dip), pega o próprio
+  // link de afiliado na Shopee e cola aqui. Quem não tem link segue pelo
+  // escape hatch, usando o link da casa.
   const [meuLink, setMeuLink] = useState("");
   const [usarLinkDaCasa, setUsarLinkDaCasa] = useState(false);
 
-  // Legenda pro Instagram na aba de imagem — some caption pra colar junto do post.
   const [legenda, setLegenda] = useState("");
+  const [erroLegenda, setErroLegenda] = useState<string | null>(null);
+  const [gerandoLegenda, iniciarLegenda] = useTransition();
 
   // Foto propria opcional pra imagem (a API da Shopee so da uma foto por
   // produto). Guardada como data URI: serve tanto pro preview quanto pra
@@ -89,6 +92,15 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
     };
   }, [info]);
 
+  /** Modelos separados por formato, pra ficar claro o que é Feed e o que é Story. */
+  const modelosPorFormato = useMemo(() => {
+    const ids = Object.keys(TEMPLATES) as TemplateId[];
+    return {
+      feed: ids.filter((id) => TEMPLATES[id].altura === 1350),
+      story: ids.filter((id) => TEMPLATES[id].altura !== 1350),
+    };
+  }, []);
+
   const linkValido = pareceLinkShopee(meuLink);
   const linkParaCopy = usarLinkDaCasa ? linkAtivo : meuLink.trim();
   const podeGerar = linkValido || usarLinkDaCasa;
@@ -99,27 +111,29 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
 
   function gerarCopyClick() {
     if (!podeGerar) return;
-    setCopy(gerador.proxima(produto, { canal, linkAfiliado: linkParaCopy }));
-    setCopiado(false);
+    // Sempre WhatsApp aqui: a aba já diz onde o texto vai ser colado, então o
+    // negrito com asterisco é sempre o certo e não precisa perguntar.
+    setCopy(gerador.proxima(produto, { canal: "whatsapp", linkAfiliado: linkParaCopy }));
+    setCopiado(null);
   }
 
   function gerarLegendaClick() {
-    setLegenda(
-      gerarCopy(produto, {
-        canal: "instagram",
-        linkAfiliado: linkParaCopy || linkAtivo,
-      }),
-    );
+    setErroLegenda(null);
+    iniciarLegenda(async () => {
+      const r = await legendaDoProduto(produto);
+      if (r.ok) setLegenda(r.legenda);
+      else setErroLegenda(r.erro);
+    });
   }
 
-  async function copiarTexto(texto: string) {
+  async function copiarTexto(texto: string, qual: "copy" | "legenda") {
     if (!texto) return;
     try {
       await navigator.clipboard.writeText(texto);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 2000);
+      setCopiado(qual);
+      setTimeout(() => setCopiado(null), 2000);
     } catch {
-      setCopiado(false);
+      setCopiado(null);
     }
   }
 
@@ -149,107 +163,99 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
           </button>
         </div>
 
-        <div className="flex shrink-0 gap-1 border-b border-black/5 px-5">
-          {(["copy", "imagem"] as const).map((nome) => (
-            <button
-              key={nome}
-              onClick={() => setAba(nome)}
-              className={`-mb-px border-b-2 px-3 pb-3 text-sm font-semibold transition-colors ${
-                aba === nome
-                  ? "border-marca-600 text-marca-700"
-                  : "border-transparent text-tinta-fraca"
-              }`}
-            >
-              {nome === "copy" ? "Copy" : "Imagem"}
-            </button>
-          ))}
-        </div>
+        <div className="flex-1 overflow-y-auto px-5 pb-5">
+          {/* Passos 1 e 2 — comuns às duas abas. */}
+          <div className="space-y-4 border-b border-black/5 pb-5">
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">
+                <span className="text-marca-700">1.</span> Abra o produto na
+                Shopee
+              </p>
+              <p className="text-xs text-tinta-fraca">
+                Abra, escolha suas opções e copie o <strong>seu</strong> link de
+                afiliado lá na Shopee.
+              </p>
+              <button
+                onClick={abrirProduto}
+                className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800"
+              >
+                Abrir produto na Shopee 🛒
+              </button>
+            </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5">
-          {aba === "copy" ? (
-            <div className="space-y-5">
-              {/* Passo 1 — abrir o produto pelo link da casa (Double-Dip). */}
-              <div className="space-y-2">
-                <p className="text-sm font-semibold">
-                  <span className="text-marca-700">1.</span> Abra o produto na
-                  Shopee
+            <div className="space-y-2">
+              <label htmlFor="meu-link" className="block text-sm font-semibold">
+                <span className="text-marca-700">2.</span> Cole aqui o seu link
+                de afiliado
+              </label>
+              <input
+                id="meu-link"
+                type="url"
+                inputMode="url"
+                value={meuLink}
+                onChange={(e) => {
+                  setMeuLink(e.target.value);
+                  if (e.target.value) setUsarLinkDaCasa(false);
+                }}
+                placeholder="https://s.shopee.com.br/..."
+                className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
+              />
+              {meuLink && !linkValido && (
+                <p className="text-xs text-red-600">
+                  Isso não parece um link da Shopee. Confira e cole de novo.
                 </p>
-                <p className="text-xs text-tinta-fraca">
-                  Abra, escolha suas opções e copie o <strong>seu</strong> link
-                  de afiliado lá na Shopee.
-                </p>
+              )}
+              {!usarLinkDaCasa ? (
                 <button
-                  onClick={abrirProduto}
-                  className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800"
+                  onClick={() => setUsarLinkDaCasa(true)}
+                  className="text-xs font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
                 >
-                  Abrir produto na Shopee 🛒
+                  não tenho um link de afiliado →
                 </button>
-              </div>
-
-              {/* Passo 2 — colar o link de afiliado do proprio usuario. */}
-              <div className="space-y-2">
-                <label htmlFor="meu-link" className="block text-sm font-semibold">
-                  <span className="text-marca-700">2.</span> Cole aqui o seu link
-                  de afiliado
-                </label>
-                <input
-                  id="meu-link"
-                  type="url"
-                  inputMode="url"
-                  value={meuLink}
-                  onChange={(e) => {
-                    setMeuLink(e.target.value);
-                    if (e.target.value) setUsarLinkDaCasa(false);
-                  }}
-                  placeholder="https://s.shopee.com.br/..."
-                  className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
-                />
-                {meuLink && !linkValido && (
-                  <p className="text-xs text-red-600">
-                    Isso não parece um link da Shopee. Confira e cole de novo.
-                  </p>
-                )}
-                {!usarLinkDaCasa ? (
+              ) : (
+                <p className="text-xs text-tinta-fraca">
+                  Ok, vai sair com um link genérico.{" "}
                   <button
-                    onClick={() => setUsarLinkDaCasa(true)}
-                    className="text-xs font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
+                    onClick={() => setUsarLinkDaCasa(false)}
+                    className="font-semibold underline underline-offset-2 hover:text-marca-700"
                   >
-                    não tenho um link de afiliado →
+                    colar meu link
                   </button>
-                ) : (
-                  <p className="text-xs text-tinta-fraca">
-                    Ok, a copy vai sair com um link genérico.{" "}
-                    <button
-                      onClick={() => setUsarLinkDaCasa(false)}
-                      className="font-semibold underline underline-offset-2 hover:text-marca-700"
-                    >
-                      colar meu link
-                    </button>
-                  </p>
-                )}
-              </div>
-
-              {/* Passo 3 — gerar, editar e copiar a copy. */}
-              <div className="space-y-3">
-                <p className="text-sm font-semibold">
-                  <span className="text-marca-700">3.</span> Gere a copy
                 </p>
-                <select
-                  aria-label="Onde você vai postar?"
-                  value={canal}
-                  onChange={(e) => setCanal(e.target.value as Canal)}
-                  className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
-                >
-                  <option value="whatsapp">WhatsApp (com *negrito*)</option>
-                  <option value="instagram">Instagram (sem negrito)</option>
-                </select>
+              )}
+            </div>
+          </div>
 
+          {/* Passo 3 — onde vai postar. */}
+          <p className="pt-5 pb-2 text-sm font-semibold">
+            <span className="text-marca-700">3.</span> Onde você vai postar?
+          </p>
+
+          <div className="flex gap-1 border-b border-black/5">
+            {(["whatsapp", "instagram"] as const).map((nome) => (
+              <button
+                key={nome}
+                onClick={() => setAba(nome)}
+                className={`-mb-px border-b-2 px-3 pb-3 text-sm font-semibold transition-colors ${
+                  aba === nome
+                    ? "border-marca-600 text-marca-700"
+                    : "border-transparent text-tinta-fraca"
+                }`}
+              >
+                {nome === "whatsapp" ? "WhatsApp 💬" : "Instagram 📸"}
+              </button>
+            ))}
+          </div>
+
+          <div className="pt-5">
+            {aba === "whatsapp" ? (
+              <div className="space-y-3">
                 <button
                   onClick={gerarCopyClick}
                   disabled={!podeGerar}
                   className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-50"
                 >
-                  {copy ? "Gerar outra copy ✨" : "Gerar copy ✨"}
+                  {copy ? "Gerar outra mensagem ✨" : "Gerar mensagem ✨"}
                 </button>
                 {!podeGerar && (
                   <p className="text-xs text-tinta-fraca">
@@ -258,16 +264,20 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                 )}
 
                 {copy && (
-                  <div className="space-y-3">
+                  <>
                     <textarea
                       value={copy}
                       onChange={(e) => {
                         setCopy(e.target.value);
-                        setCopiado(false);
+                        setCopiado(null);
                       }}
-                      rows={8}
+                      rows={9}
                       className="w-full resize-y rounded-xl border border-black/10 bg-tela p-4 text-sm outline-none focus:border-marca-500"
                     />
+                    <p className="text-xs text-tinta-fraca">
+                      Os <code>*asteriscos*</code> viram negrito quando você cola
+                      no WhatsApp.
+                    </p>
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(copy)}`}
                       target="_blank"
@@ -276,186 +286,178 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                     >
                       Enviar no WhatsApp 💬
                     </a>
-                    <div className="flex gap-2">
-                      {typeof navigator !== "undefined" &&
-                        "share" in navigator && (
-                          <button
-                            onClick={() =>
-                              navigator.share({ text: copy }).catch(() => {})
-                            }
-                            className="flex-1 rounded-xl bg-tinta px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90"
-                          >
-                            Compartilhar
-                          </button>
-                        )}
-                      <button
-                        onClick={() => copiarTexto(copy)}
-                        className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-                          copiado
-                            ? "bg-emerald-600 text-white"
-                            : "bg-tela text-tinta hover:bg-black/5"
-                        }`}
-                      >
-                        {copiado ? "Copiado! ✅" : "Copiar 📋"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="template" className="block text-sm font-semibold">
-                  Modelo da imagem
-                </label>
-                <select
-                  id="template"
-                  value={templateAtual}
-                  onChange={(e) => setTemplateAtual(e.target.value as TemplateId)}
-                  className="mt-1.5 w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
-                >
-                  {Object.entries(TEMPLATES).map(([id, t]) => (
-                    <option key={id} value={id}>
-                      {t.nome} ({t.rotulo})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Foto: a do produto (padrao) ou uma que o usuario mandar. */}
-              <div className="space-y-2">
-                <span className="block text-sm font-semibold">Foto da imagem</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className="cursor-pointer rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5">
-                    {fotoPropria ? "Trocar minha foto" : "Usar uma foto minha"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => escolherFoto(e.target.files?.[0])}
-                    />
-                  </label>
-                  {fotoPropria && (
                     <button
-                      onClick={() => setFotoPropria(null)}
-                      className="rounded-xl px-3 py-2.5 text-sm font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
+                      onClick={() => copiarTexto(copy, "copy")}
+                      className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        copiado === "copy"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-tela text-tinta hover:bg-black/5"
+                      }`}
                     >
-                      voltar pra foto do produto
+                      {copiado === "copy" ? "Copiado! ✅" : "Copiar 📋"}
                     </button>
-                  )}
-                </div>
-                {fotoPropria && (
-                  <p className="text-xs text-tinta-fraca">
-                    Sua foto é usada só pra montar a imagem e não fica guardada.
-                  </p>
+                  </>
                 )}
               </div>
-
-              <div className="flex justify-center rounded-xl bg-tela p-4">
-                <div
-                  style={{ width: preview.largura, height: preview.altura }}
-                  className="overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5"
-                >
-                  <div
-                    style={{
-                      width: info.largura,
-                      height: info.altura,
-                      transform: `scale(${preview.escala})`,
-                      transformOrigin: "top left",
-                    }}
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="template" className="block text-sm font-semibold">
+                    Modelo da imagem
+                  </label>
+                  <select
+                    id="template"
+                    value={templateAtual}
+                    onChange={(e) => setTemplateAtual(e.target.value as TemplateId)}
+                    className="mt-1.5 w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
                   >
-                    {renderTemplate(
-                      templateAtual,
-                      { nome: produto.nome, preco: produto.preco },
-                      fotoPropria ?? produto.imagemUrl,
-                      // No preview a arte é servida pelo /public mesmo; só a
-                      // rota que gera o PNG precisa dela como data URI.
-                      arquivoDaMoldura(templateAtual) ?? undefined,
+                    <optgroup label="Feed (4:5)">
+                      {modelosPorFormato.feed.map((id) => (
+                        <option key={id} value={id}>
+                          {TEMPLATES[id].nome}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Story (9:16)">
+                      {modelosPorFormato.story.map((id) => (
+                        <option key={id} value={id}>
+                          {TEMPLATES[id].nome}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+
+                {/* Foto: a do produto (padrao) ou uma que o usuario mandar. */}
+                <div className="space-y-2">
+                  <span className="block text-sm font-semibold">Foto da imagem</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="cursor-pointer rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5">
+                      {fotoPropria ? "Trocar minha foto" : "Usar uma foto minha"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => escolherFoto(e.target.files?.[0])}
+                      />
+                    </label>
+                    {fotoPropria && (
+                      <button
+                        onClick={() => setFotoPropria(null)}
+                        className="rounded-xl px-3 py-2.5 text-sm font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
+                      >
+                        voltar pra foto do produto
+                      </button>
                     )}
                   </div>
+                  {fotoPropria && (
+                    <p className="text-xs text-tinta-fraca">
+                      Sua foto é usada só pra montar a imagem e não fica guardada.
+                    </p>
+                  )}
                 </div>
-              </div>
 
-              {/* Legenda pra colar junto do post no Instagram. */}
-              <div className="space-y-2">
-                <label htmlFor="legenda" className="block text-sm font-semibold">
-                  Legenda pro Instagram
-                </label>
-                {legenda ? (
-                  <>
-                    <textarea
-                      id="legenda"
-                      value={legenda}
-                      onChange={(e) => setLegenda(e.target.value)}
-                      rows={6}
-                      className="w-full resize-y rounded-xl border border-black/10 bg-tela p-4 text-sm outline-none focus:border-marca-500"
-                    />
-                    <div className="flex gap-2">
+                <div className="flex justify-center rounded-xl bg-tela p-4">
+                  <div
+                    style={{ width: preview.largura, height: preview.altura }}
+                    className="overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5"
+                  >
+                    <div
+                      style={{
+                        width: info.largura,
+                        height: info.altura,
+                        transform: `scale(${preview.escala})`,
+                        transformOrigin: "top left",
+                      }}
+                    >
+                      {renderTemplate(
+                        templateAtual,
+                        { nome: produto.nome, preco: produto.preco },
+                        fotoPropria ?? produto.imagemUrl,
+                        // No preview a arte é servida pelo /public mesmo; só a
+                        // rota que gera o PNG precisa dela como data URI.
+                        arquivoDaMoldura(templateAtual) ?? undefined,
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {erro && (
+                  <p
+                    role="alert"
+                    className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+                  >
+                    {erro}
+                  </p>
+                )}
+
+                <button
+                  onClick={() =>
+                    gerar("compartilhar", {
+                      legenda: legenda || undefined,
+                      foto: fotoPropria ?? undefined,
+                    })
+                  }
+                  disabled={estado === "capturando"}
+                  className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-60"
+                >
+                  {estado === "capturando"
+                    ? "Gerando..."
+                    : estado === "sucesso"
+                      ? "Pronto! ✅"
+                      : "Compartilhar imagem 📸"}
+                </button>
+                <button
+                  onClick={() => gerar("baixar", { foto: fotoPropria ?? undefined })}
+                  disabled={estado === "capturando"}
+                  className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5 disabled:opacity-60"
+                >
+                  Baixar imagem
+                </button>
+
+                {/* Legenda pra colar junto do post. */}
+                <div className="space-y-2 border-t border-black/5 pt-4">
+                  <label htmlFor="legenda" className="block text-sm font-semibold">
+                    Legenda pro post
+                  </label>
+                  {legenda ? (
+                    <>
+                      <textarea
+                        id="legenda"
+                        value={legenda}
+                        onChange={(e) => setLegenda(e.target.value)}
+                        rows={10}
+                        className="w-full resize-y rounded-xl border border-black/10 bg-tela p-4 text-sm outline-none focus:border-marca-500"
+                      />
                       <button
-                        onClick={gerarLegendaClick}
-                        className="flex-1 rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5"
-                      >
-                        Gerar outra ✨
-                      </button>
-                      <button
-                        onClick={() => copiarTexto(legenda)}
-                        className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-                          copiado
+                        onClick={() => copiarTexto(legenda, "legenda")}
+                        className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                          copiado === "legenda"
                             ? "bg-emerald-600 text-white"
                             : "bg-tela text-tinta hover:bg-black/5"
                         }`}
                       >
-                        {copiado ? "Copiado! ✅" : "Copiar legenda 📋"}
+                        {copiado === "legenda" ? "Copiado! ✅" : "Copiar legenda 📋"}
                       </button>
-                    </div>
-                  </>
-                ) : (
-                  <button
-                    onClick={gerarLegendaClick}
-                    className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5"
-                  >
-                    Gerar legenda ✨
-                  </button>
-                )}
+                    </>
+                  ) : (
+                    <button
+                      onClick={gerarLegendaClick}
+                      disabled={gerandoLegenda}
+                      className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5 disabled:opacity-60"
+                    >
+                      {gerandoLegenda ? "Escrevendo a legenda…" : "Gerar legenda ✨"}
+                    </button>
+                  )}
+                  {erroLegenda && (
+                    <p role="alert" className="text-xs text-red-600">
+                      {erroLegenda}
+                    </p>
+                  )}
+                </div>
               </div>
-
-              {erro && (
-                <p
-                  role="alert"
-                  className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
-                >
-                  {erro}
-                </p>
-              )}
-
-              <button
-                onClick={() =>
-                  gerar("compartilhar", {
-                    legenda: legenda || undefined,
-                    foto: fotoPropria ?? undefined,
-                  })
-                }
-                disabled={estado === "capturando"}
-                className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-60"
-              >
-                {estado === "capturando"
-                  ? "Gerando..."
-                  : estado === "sucesso"
-                    ? "Pronto! ✅"
-                    : "Compartilhar imagem 📸"}
-              </button>
-              <button
-                onClick={() =>
-                  gerar("baixar", { foto: fotoPropria ?? undefined })
-                }
-                disabled={estado === "capturando"}
-                className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5 disabled:opacity-60"
-              >
-                Baixar imagem
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -19,6 +19,7 @@ type ProductOfferNode = {
   commission: string;
   sales: number;
   ratingStar: string;
+  priceDiscountRate: string;
   productCatIds: number[];
   offerLink: string;
   productLink: string;
@@ -33,6 +34,7 @@ const PRODUCT_FIELDS = `
   commission
   sales
   ratingStar
+  priceDiscountRate
   productCatIds
   offerLink
   productLink
@@ -57,6 +59,7 @@ function toProduto(node: ProductOfferNode): Produto {
     comissao: toNumber(node.commission),
     vendas: node.sales ?? 0,
     avaliacao: toNumber(node.ratingStar),
+    taxaDesconto: toNumber(node.priceDiscountRate),
     nicho: nichoFromCategoryTrail(node.productCatIds ?? []),
     offerLink: node.offerLink,
     produtoLink: node.productLink,

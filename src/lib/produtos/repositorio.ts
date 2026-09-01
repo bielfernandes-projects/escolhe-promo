@@ -16,6 +16,7 @@ type LinhaProduto = {
   comissao: string | number;
   vendas: number;
   avaliacao: string | number;
+  taxa_desconto: string | number;
   nicho: Nicho;
   offer_link: string;
   produto_link: string;
@@ -37,6 +38,7 @@ const deLinha = (linha: LinhaProduto): Produto => ({
   comissao: numero(linha.comissao),
   vendas: linha.vendas ?? 0,
   avaliacao: numero(linha.avaliacao),
+  taxaDesconto: numero(linha.taxa_desconto),
   nicho: linha.nicho,
   offerLink: linha.offer_link,
   produtoLink: linha.produto_link,
@@ -55,6 +57,7 @@ const paraLinha = (produto: Produto, quando: string): LinhaProduto => ({
   comissao: produto.comissao,
   vendas: produto.vendas,
   avaliacao: produto.avaliacao,
+  taxa_desconto: produto.taxaDesconto,
   nicho: produto.nicho,
   offer_link: produto.offerLink,
   produto_link: produto.produtoLink,

@@ -17,8 +17,34 @@ export type Produto = {
   comissao: number;
   vendas: number;
   avaliacao: number;
+  /**
+   * Percentual de desconto informado pela Shopee (0 a 100). O preço "de" não
+   * vem pronto: sai de `preco / (1 - taxaDesconto/100)`. Ver `precoDe()`.
+   */
+  taxaDesconto: number;
   nicho: Nicho;
   /** Link de afiliado do dono do app — sustenta o Double-Dip. */
   offerLink: string;
   produtoLink: string;
 };
+
+/**
+ * Teto de desconto que ainda soa verdadeiro numa legenda.
+ *
+ * A Shopee informa descontos de 65%, 76%, 79% em cima de um "preço cheio" que
+ * quase nunca foi praticado — anunciar "de R$ 99,95 por R$ 20,99" queima a
+ * credibilidade de quem posta. Acima deste teto o "de" é omitido.
+ */
+const DESCONTO_CRIVEL_MAX = 50;
+
+/**
+ * Preço antes da promoção, ou `null` quando não há desconto informado ou
+ * quando ele é grande demais pra ser crível.
+ */
+export function precoDe(produto: Produto): number | null {
+  const taxa = produto.taxaDesconto;
+  if (taxa <= 0 || taxa > DESCONTO_CRIVEL_MAX) return null;
+  const de = produto.preco / (1 - taxa / 100);
+  // Um "de" que arredonda pro mesmo valor do "por" não acrescenta nada.
+  return de - produto.preco >= 0.5 ? de : null;
+}

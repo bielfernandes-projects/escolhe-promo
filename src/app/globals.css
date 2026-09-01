@@ -27,6 +27,13 @@
   font-display: swap;
   src: url("/fonts/baloo2.woff") format("woff");
 }
+@font-face {
+  font-family: "DejaVu Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dejavu-bold.woff") format("woff");
+}
 
 /*
  * A Geist é carregada no layout como variável CSS. Antes havia um

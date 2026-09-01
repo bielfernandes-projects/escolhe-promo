@@ -70,8 +70,20 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
     });
   }, [produto.produtoLink]);
 
-  const { templateAtual, setTemplateAtual, estado, erro, gerar } =
-    useGeradorImagem(produto);
+  const {
+    templateAtual,
+    setTemplateAtual,
+    erro,
+    pronta,
+    entregue,
+    compartilhar,
+    baixar,
+  } = useGeradorImagem(produto, {
+    // Só prepara a imagem quando a aba está aberta — não faz sentido gastar
+    // uma geração pra quem só vai postar no WhatsApp.
+    ativo: aba === "instagram",
+    foto: fotoPropria ?? undefined,
+  });
 
   const info = TEMPLATES[templateAtual];
 
@@ -402,25 +414,23 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                   </p>
                 )}
 
+                {/* Sem await de rede entre o clique e o navigator.share: a
+                    imagem já vem pronta, senão o celular recusa a folha de
+                    compartilhamento e o app acabava baixando o arquivo. */}
                 <button
-                  onClick={() =>
-                    gerar("compartilhar", {
-                      legenda: legenda || undefined,
-                      foto: fotoPropria ?? undefined,
-                    })
-                  }
-                  disabled={estado === "capturando"}
+                  onClick={() => compartilhar(legenda || undefined)}
+                  disabled={!pronta}
                   className="w-full rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-colors hover:bg-marca-700 active:bg-marca-800 disabled:opacity-60"
                 >
-                  {estado === "capturando"
-                    ? "Gerando..."
-                    : estado === "sucesso"
+                  {!pronta
+                    ? "Preparando imagem…"
+                    : entregue
                       ? "Pronto! ✅"
                       : "Compartilhar imagem 📸"}
                 </button>
                 <button
-                  onClick={() => gerar("baixar", { foto: fotoPropria ?? undefined })}
-                  disabled={estado === "capturando"}
+                  onClick={() => baixar()}
+                  disabled={!pronta}
                   className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5 disabled:opacity-60"
                 >
                   Baixar imagem

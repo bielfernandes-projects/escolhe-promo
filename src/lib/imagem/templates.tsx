@@ -99,6 +99,10 @@ type Moldura = {
     largura: number;
     cor: string;
     tamanhoMax: number;
+    /** Graus, pra acompanhar um elemento inclinado da arte. */
+    rot?: number;
+    /** Alinhamento dentro do slot. */
+    alinhar?: "inicio" | "centro";
     /**
      * "empilhado": "R$" numa linha e o valor na de baixo — cabe em coluna
      * estreita. "linha": tudo numa linha só, quando há largura sobrando.
@@ -111,13 +115,22 @@ type Moldura = {
   };
 };
 
-/** Fontes de display disponíveis (a rota /api/imagem carrega todas). */
-export type FonteDisplay = "Anton" | "Titan One" | "Baloo 2";
+/**
+ * Fontes de display disponíveis (a rota /api/imagem carrega todas).
+ *
+ * "DejaVu Sans" é a substituta da Tahoma, que o dono pediu para o preço: a
+ * Tahoma é proprietária da Microsoft e não pode ser redistribuída no
+ * repositório nem no servidor (Linux, que não a tem). A DejaVu descende da
+ * Bitstream Vera, desenhada como equivalente livre da família Verdana/Tahoma —
+ * mesma pegada sólida e quadrada, sem o arredondado da Baloo.
+ */
+export type FonteDisplay = "Anton" | "Titan One" | "Baloo 2" | "DejaVu Sans";
 
 export const FONTES_DISPLAY: Record<FonteDisplay, string> = {
   Anton: "anton.woff",
   "Titan One": "titan-one.woff",
   "Baloo 2": "baloo2.woff",
+  "DejaVu Sans": "dejavu-bold.woff",
 };
 
 /** Quanto cada família ocupa por dígito, em em. Usado pra achar o tamanho. */
@@ -125,6 +138,7 @@ const LARGURA_DIGITO: Record<FonteDisplay, number> = {
   Anton: 0.5,
   "Titan One": 0.62,
   "Baloo 2": 0.58,
+  "DejaVu Sans": 0.7,
 };
 
 /**
@@ -141,28 +155,27 @@ const LARGURA_DIGITO: Record<FonteDisplay, number> = {
  * y 1395..1485), onde sobra largura pra uma linha só.
  */
 const FEED_FOTO: Slot = { x: 249, y: 433, largura: 589, altura: 559, rot: -4.7 };
-const FEED_NOME = {
-  x: 312,
-  y: 1006,
-  largura: 520,
-  altura: 84,
-  rot: -4.7,
-  // Baloo 2 (densa e arredondada) pra acompanhar a letra de marcador da arte —
-  // com Inter o nome saía com cara de fonte de sistema e destoava de tudo.
-  tamanho: 27,
-  cor: "#141414",
-  maxChars: 54,
-  fonte: "Baloo 2",
-} as const;
+// O nome do produto saiu das imagens a pedido do dono — a foto já mostra o que
+// é, e o texto competia com o preço. A tarja branca da arte fica limpa, como um
+// polaroid em branco.
+/**
+ * O preço ocupa a tarja branca do polaroid, que ficou livre quando o nome saiu.
+ *
+ * Na coluna do "APENAS:" só cabem ~256px de largura, e nela a DejaVu (mais
+ * larga que a Baloo anterior) espremia o preço pra ~81px — menor do que era
+ * antes, o oposto do pedido. Na tarja há 520px, o que leva o preço a ~150px.
+ * A seta do "APENAS:" continua apontando pro polaroid, então a leitura fecha.
+ */
 const FEED_PRECO = {
-  x: 26,
-  y: 996,
-  largura: 240,
+  x: 312,
+  y: 1004,
+  largura: 520,
+  rot: -4.7,
+  alinhar: "centro",
   cor: "#141414",
-  tamanhoMax: 112,
-  tamanhoMoeda: 44,
-  layout: "empilhado",
-  fonte: "Baloo 2",
+  tamanhoMax: 150,
+  layout: "linha",
+  fonte: "DejaVu Sans",
 } as const;
 
 const STORY_FOTO: Slot = { x: 105, y: 465, largura: 870, altura: 866 };
@@ -173,7 +186,7 @@ export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
     largura: 1080,
     altura: 1350,
     foto: FEED_FOTO,
-    nome: FEED_NOME,
+
     preco: FEED_PRECO,
   },
   "feed-2": {
@@ -181,7 +194,7 @@ export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
     largura: 1080,
     altura: 1350,
     foto: FEED_FOTO,
-    nome: FEED_NOME,
+
     preco: FEED_PRECO,
   },
   "story-1": {
@@ -197,7 +210,7 @@ export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
       cor: "#ffffff",
       tamanhoMax: 104,
       layout: "linha",
-      fonte: "Baloo 2",
+      fonte: "DejaVu Sans",
     },
   },
   "story-2": {
@@ -213,7 +226,7 @@ export const MOLDURAS: Partial<Record<TemplateId, Moldura>> = {
       cor: "#1800ad",
       tamanhoMax: 104,
       layout: "linha",
-      fonte: "Baloo 2",
+      fonte: "DejaVu Sans",
     },
   },
 };
@@ -310,7 +323,12 @@ function ImagemComMoldura({
           width: moldura.preco.largura,
           display: "flex",
           flexDirection: "column",
-          alignItems: empilhado ? "center" : "flex-start",
+          alignItems:
+            (moldura.preco.alinhar ?? (empilhado ? "centro" : "inicio")) ===
+            "centro"
+              ? "center"
+              : "flex-start",
+          transform: `rotate(${moldura.preco.rot ?? 0}deg)`,
           fontFamily: moldura.preco.fonte,
           color: moldura.preco.cor,
         }}

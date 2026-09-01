@@ -11,6 +11,12 @@ export function Cabecalho({ email }: { email: string }) {
   const pathname = usePathname();
   const [saindo, setSaindo] = useState(false);
   const naVitrine = pathname === "/app/vitrine";
+  const naConfig = pathname === "/app/configuracoes";
+
+  const abaClasse = (ativa: boolean) =>
+    `shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+      ativa ? "bg-marca-50 text-marca-700" : "text-tinta-fraca hover:bg-tela"
+    }`;
 
   async function sair() {
     setSaindo(true);
@@ -22,38 +28,36 @@ export function Cabecalho({ email }: { email: string }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-superficie/90 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Link href="/app" aria-label="Eita Promo">
-            <Marca />
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <Link href="/app" aria-label="Eita Promo" className="shrink-0">
+            {/* Só o símbolo no celular: o nome ao lado brigava com a aba "Vitrine". */}
+            <Marca texto="hidden text-base sm:inline" />
           </Link>
           <Link
             href="/app/vitrine"
             aria-current={naVitrine ? "page" : undefined}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-              naVitrine
-                ? "bg-marca-50 text-marca-700"
-                : "text-tinta-fraca hover:bg-tela"
-            }`}
+            className={abaClasse(naVitrine)}
           >
             Vitrine
           </Link>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="hidden max-w-[16ch] truncate text-xs text-tinta-fraca sm:block">
-            {email}
-          </span>
           <Link
             href="/app/configuracoes"
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-tinta-fraca transition-colors hover:bg-tela"
+            aria-current={naConfig ? "page" : undefined}
+            className={abaClasse(naConfig)}
           >
             Configurações
           </Link>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden max-w-[16ch] truncate text-xs text-tinta-fraca sm:block">
+            {email}
+          </span>
           <button
             onClick={sair}
             disabled={saindo}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-tinta-fraca transition-colors hover:bg-tela disabled:opacity-50"
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-tinta-fraca transition-colors hover:bg-tela disabled:opacity-50"
           >
             {saindo ? "Saindo..." : "Sair"}
           </button>

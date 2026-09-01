@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { Produto } from "@/lib/produtos/tipos";
 import { criarGeradorDeCopy } from "@/lib/copy/gerador";
 import {
@@ -50,6 +50,40 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
   // produto). Guardada como data URI: serve tanto pro preview quanto pra
   // mandar pra rota que monta a imagem.
   const [fotoPropria, setFotoPropria] = useState<string | null>(null);
+
+  // Trava a rolagem da página atrás do modal enquanto ele está aberto — senão
+  // no celular ela rola junto e o "puxar pra atualizar" recarregava tudo.
+  useEffect(() => {
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = antes;
+    };
+  }, []);
+
+  // Arrastar a folha pra baixo pra fechar (é o que a alcinha promete). Só começa
+  // se o conteúdo já está no topo, pra não brigar com a rolagem interna.
+  const rolagemRef = useRef<HTMLDivElement>(null);
+  const inicioArrasto = useRef<number | null>(null);
+  const [arrastoY, setArrastoY] = useState(0);
+  const [arrastando, setArrastando] = useState(false);
+
+  function aoTocarInicio(e: React.TouchEvent) {
+    if ((rolagemRef.current?.scrollTop ?? 0) > 0) return;
+    inicioArrasto.current = e.touches[0].clientY;
+    setArrastando(true);
+  }
+  function aoTocarMover(e: React.TouchEvent) {
+    if (inicioArrasto.current === null) return;
+    const dy = e.touches[0].clientY - inicioArrasto.current;
+    setArrastoY(dy > 0 ? dy : 0);
+  }
+  function aoTocarFim() {
+    if (arrastoY > 90) onClose();
+    else setArrastoY(0);
+    inicioArrasto.current = null;
+    setArrastando(false);
+  }
 
   function escolherFoto(arquivo: File | undefined) {
     if (!arquivo) return;
@@ -170,9 +204,16 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={aoTocarInicio}
+        onTouchMove={aoTocarMover}
+        onTouchEnd={aoTocarFim}
+        style={{
+          transform: arrastoY ? `translateY(${arrastoY}px)` : undefined,
+          transition: arrastando ? "none" : "transform .2s ease-out",
+        }}
         className="flex max-h-[92vh] w-full max-w-lg flex-col rounded-t-2xl bg-superficie sm:max-h-[88vh] sm:rounded-2xl"
       >
-        {/* Alcinha de bottom-sheet: so faz sentido no celular. */}
+        {/* Alcinha de bottom-sheet: arraste pra baixo pra fechar (no celular). */}
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-black/15 sm:hidden" />
 
         <div className="flex shrink-0 items-start justify-between gap-3 px-5 pt-3 pb-3">
@@ -186,7 +227,10 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-5">
+        <div
+          ref={rolagemRef}
+          className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5"
+        >
           {/* Passos 1 e 2 — comuns às duas abas. */}
           <div className="space-y-4 border-b border-black/5 pb-5">
             <div className="space-y-2">

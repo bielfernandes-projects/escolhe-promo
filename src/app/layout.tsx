@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // O dono pediu pra travar o zoom: sem pinça e sem duplo-toque, em qualquer sentido.
+  maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
   themeColor: "#ee4d2d",
 };
 

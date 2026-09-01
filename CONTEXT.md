@@ -22,7 +22,7 @@ O array `productCatIds` que a Shopee devolve para um Produto: os IDs numéricos 
 Conjunto de quatro slots (Abertura, Benefício, Urgência, Fechamento), cada um com um array de variações; o sorteio de uma variação por slot gera uma copy única.
 
 **Template Visual**:
-Um dos 3 a 5 layouts HTML/CSS usados para renderizar, no client, uma imagem de Feed ou Story com preço do Produto e uma foto — a do Produto por padrão, ou uma que o usuário enviou (fica só no navegador dele, não sobe pra lugar nenhum).
+Um layout que gera a imagem de divulgação (Feed/Story) no estilo "achadinho" — preço em destaque, uma foto (a do Produto por padrão, ou uma que o usuário enviou) e enfeites fixos. Montado pelo satori/next-og no servidor (rota `/api/imagem`), não no DOM — o html2canvas embaralhava o texto com fonte forte. Hoje há um modelo próprio ("Cartão"); os demais virão de molduras desenhadas no Canva (PNG com retângulos coloridos marcando onde entram a foto e o preço).
 
 **Double-Dip**:
 Ao abrir o modal de um Produto, o passo 1 é o botão "Abrir produto na Shopee", que leva pelo link de afiliado do dono do app — o usuário passa por esse link no caminho de pegar o próprio link de afiliado na Shopee. Se ele seguir sem colar um link próprio ("não tenho um link de afiliado"), a copy também sai com o link do dono. Nos dois casos o dono monetiza.

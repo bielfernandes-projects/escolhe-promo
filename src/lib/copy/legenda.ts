@@ -130,7 +130,7 @@ export type ResultadoLegenda = { texto: string; viaIA: boolean };
  */
 export async function gerarLegenda(produto: Produto): Promise<ResultadoLegenda> {
   const prompt = instrucoes(produto);
-  const hashtags = hashtagsDoNicho(produto.nicho);
+  const hashtags = hashtagsDoNicho(produto.nicho, produto.nome);
 
   for (const modelo of MODELOS) {
     const corpo = await chamarModelo(modelo, prompt);

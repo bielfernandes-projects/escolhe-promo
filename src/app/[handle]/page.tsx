@@ -76,9 +76,6 @@ export async function generateMetadata({
   };
 }
 
-const emReais = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
 export default async function VitrinePublicaPage({
   params,
 }: {
@@ -120,7 +117,7 @@ export default async function VitrinePublicaPage({
             Ainda não tem promoção aqui. Volte em breve!
           </p>
         ) : (
-          <VitrinePublicaClient itens={dados.itens} formatarPreco={emReais} />
+          <VitrinePublicaClient itens={dados.itens} />
         )}
       </main>
 

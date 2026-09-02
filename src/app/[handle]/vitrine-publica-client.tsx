@@ -11,13 +11,15 @@ export type ItemVitrine = {
   link_afiliado: string;
 };
 
-export function VitrinePublicaClient({
-  itens,
-  formatarPreco,
-}: {
-  itens: ItemVitrine[];
-  formatarPreco: (v: number) => string;
-}) {
+/**
+ * Formata aqui dentro, e nao recebe a funcao por prop: passar funcao de um
+ * Server Component pra um Client Component nao serializa, e o React derruba a
+ * pagina com "Functions cannot be passed directly to Client Components".
+ */
+const emReais = (v: number) =>
+  Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+export function VitrinePublicaClient({ itens }: { itens: ItemVitrine[] }) {
   const [busca, setBusca] = useState("");
 
   const filtrados = useMemo(() => {
@@ -71,7 +73,7 @@ export function VitrinePublicaClient({
                 </h2>
                 <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
                   <span className="fonte-display text-[17px] text-tinta">
-                    {formatarPreco(item.preco)}
+                    {emReais(item.preco)}
                   </span>
                   <span className="shrink-0 rounded-lg bg-marca-600 px-2.5 py-1 text-[11px] font-bold text-white">
                     Ver

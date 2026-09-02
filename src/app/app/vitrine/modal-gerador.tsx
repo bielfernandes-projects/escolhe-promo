@@ -19,6 +19,8 @@ type ModalGeradorProps = {
   onClose: () => void;
   /** Chamado quando a afiliada compartilha e o produto entra nas divulgações. */
   onDivulgou?: (itemId: string) => void;
+  /** A afiliada já salvou as credenciais da API da Shopee em Configurações. */
+  temApiShopee?: boolean;
 };
 
 /** Espaco que o preview pode ocupar. O template real e bem maior e e escalado. */
@@ -33,7 +35,12 @@ function pareceLinkShopee(valor: string): boolean {
   return /shopee\.com\.br|shp\.ee|s\.shopee|shope\.ee/i.test(valor.trim());
 }
 
-export function ModalGerador({ produto, onClose, onDivulgou }: ModalGeradorProps) {
+export function ModalGerador({
+  produto,
+  onClose,
+  onDivulgou,
+  temApiShopee = false,
+}: ModalGeradorProps) {
   const [aba, setAba] = useState<"whatsapp" | "instagram">("whatsapp");
   const [adicionarNaVitrine, setAdicionarNaVitrine] = useState(true);
 
@@ -155,14 +162,20 @@ export function ModalGerador({ produto, onClose, onDivulgou }: ModalGeradorProps
   }, []);
 
   const linkValido = pareceLinkShopee(meuLink);
-  const linkParaCopy = usarLinkDaCasa ? linkAtivo : meuLink.trim();
-  const podeGerar = linkValido || usarLinkDaCasa;
+  // Link colado no passo 2 tem prioridade; senão usa o `linkAtivo` (o link
+  // gerado pela API dela quando configurada, ou o link da casa).
+  const linkParaCopy =
+    linkValido && !usarLinkDaCasa ? meuLink.trim() : linkAtivo;
+  const podeGerar = linkValido || usarLinkDaCasa || temApiShopee;
 
   // "Próprio" = qualquer link que não seja o offerLink da casa. Cobre tanto o
   // link colado no passo 2 quanto o gerado pelas credenciais dela (linkAtivo).
   const usouLinkProprio =
     linkParaCopy !== "" && linkParaCopy !== produto.offerLink;
-  const avisaLinkGenerico = adicionarNaVitrine && !usouLinkProprio;
+  // Com API configurada o link dela já é o padrão — não avisa (e evita o flash
+  // enquanto o linkAtivo ainda não resolveu).
+  const avisaLinkGenerico =
+    adicionarNaVitrine && !usouLinkProprio && !temApiShopee;
 
   /** Registra a divulgação quando ela compartilha (bookkeeping, não bloqueia). */
   function registrarSeMarcado() {
@@ -240,7 +253,7 @@ export function ModalGerador({ produto, onClose, onDivulgou }: ModalGeradorProps
           transform: arrastoY ? `translateY(${arrastoY}px)` : undefined,
           transition: arrastando ? "none" : "transform .2s ease-out",
         }}
-        className="flex max-h-[92vh] w-full max-w-lg flex-col rounded-t-3xl bg-superficie shadow-2xl sm:max-h-[88vh] sm:rounded-3xl"
+        className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-superficie shadow-2xl sm:max-h-[88vh] sm:rounded-3xl"
       >
         {/* Alcinha de bottom-sheet: arraste pra baixo pra fechar (no celular). */}
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-black/15 sm:hidden" />
@@ -283,71 +296,108 @@ export function ModalGerador({ produto, onClose, onDivulgou }: ModalGeradorProps
           ref={rolagemRef}
           className="flex-1 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-5"
         >
-          {/* Passos 1 e 2 — comuns às duas abas. */}
-          <div className="space-y-5 border-b border-black/[0.06] py-5">
-            <div className="space-y-2.5">
-              <p className="flex items-center gap-2 text-sm font-semibold text-tinta">
-                <PassoBadge>1</PassoBadge>
-                Abra o produto na Shopee
+          {/* Passos do link — mudam conforme ela já tem a API configurada. */}
+          {temApiShopee ? (
+            <div className="border-b border-black/[0.06] py-5">
+              <p className="flex items-start gap-2 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">
+                <span className="mt-px shrink-0 font-bold">✓</span>
+                <span>
+                  Sua API da Shopee está configurada — o link sai com a{" "}
+                  <strong>sua</strong> afiliação automaticamente. É só gerar e
+                  postar.
+                </span>
               </p>
-              <p className="text-xs text-tinta-fraca">
-                Abra, escolha suas opções e copie o <strong>seu</strong> link de
-                afiliado lá na Shopee.
-              </p>
-              <button
-                onClick={abrirProduto}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-all hover:bg-marca-700 active:scale-[0.99] active:bg-marca-800"
-              >
-                Abrir produto na Shopee
-                <SairIcone className="h-4 w-4" />
-              </button>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-xs font-semibold text-tinta-fraca">
+                  Usar outro link só neste produto
+                </summary>
+                <input
+                  type="url"
+                  inputMode="url"
+                  value={meuLink}
+                  onChange={(e) => setMeuLink(e.target.value)}
+                  placeholder="https://s.shopee.com.br/..."
+                  className="mt-2 w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 text-sm outline-none focus:border-marca-500"
+                />
+                {meuLink && !linkValido && (
+                  <p className="mt-1 text-xs text-red-600">
+                    Isso não parece um link da Shopee.
+                  </p>
+                )}
+              </details>
             </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="meu-link"
-                className="flex items-center gap-2 text-sm font-semibold text-tinta"
-              >
-                <PassoBadge>2</PassoBadge>
-                Cole aqui o seu link de afiliado
-              </label>
-              <input
-                id="meu-link"
-                type="url"
-                inputMode="url"
-                value={meuLink}
-                onChange={(e) => {
-                  setMeuLink(e.target.value);
-                  if (e.target.value) setUsarLinkDaCasa(false);
-                }}
-                placeholder="https://s.shopee.com.br/..."
-                className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none transition-colors focus:border-marca-500"
-              />
-              {meuLink && !linkValido && (
-                <p className="text-xs text-red-600">
-                  Isso não parece um link da Shopee. Confira e cole de novo.
+          ) : (
+            <div className="space-y-5 border-b border-black/[0.06] py-5">
+              <div className="space-y-2.5">
+                <p className="flex items-center gap-2 text-sm font-semibold text-tinta">
+                  <PassoBadge>1</PassoBadge>
+                  Abra o produto na Shopee
                 </p>
-              )}
-              {!usarLinkDaCasa ? (
+                <p className="text-xs text-tinta-fraca">
+                  Abra, escolha suas opções e copie o <strong>seu</strong> link
+                  de afiliada lá na Shopee.
+                </p>
                 <button
-                  onClick={() => setUsarLinkDaCasa(true)}
-                  className="text-xs font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
+                  onClick={abrirProduto}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-marca-600 px-4 py-3.5 font-semibold text-white transition-all hover:bg-marca-700 active:scale-[0.99] active:bg-marca-800"
                 >
-                  não tenho um link de afiliado
+                  Abrir produto na Shopee
+                  <SairIcone className="h-4 w-4" />
                 </button>
-              ) : (
-                <p className="rounded-lg bg-tela px-3 py-2 text-xs text-tinta-fraca">
-                  Ok, vai sair com um link genérico.{" "}
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="meu-link"
+                  className="flex items-center gap-2 text-sm font-semibold text-tinta"
+                >
+                  <PassoBadge>2</PassoBadge>
+                  Cole aqui o seu link de afiliada
+                </label>
+                <input
+                  id="meu-link"
+                  type="url"
+                  inputMode="url"
+                  value={meuLink}
+                  onChange={(e) => {
+                    setMeuLink(e.target.value);
+                    if (e.target.value) setUsarLinkDaCasa(false);
+                  }}
+                  placeholder="https://s.shopee.com.br/..."
+                  className="w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none transition-colors focus:border-marca-500"
+                />
+                {meuLink && !linkValido && (
+                  <p className="text-xs text-red-600">
+                    Isso não parece um link da Shopee. Confira e cole de novo.
+                  </p>
+                )}
+                {!usarLinkDaCasa ? (
                   <button
-                    onClick={() => setUsarLinkDaCasa(false)}
-                    className="font-semibold text-marca-700 underline underline-offset-2"
+                    onClick={() => setUsarLinkDaCasa(true)}
+                    className="text-xs font-semibold text-tinta-fraca underline underline-offset-2 hover:text-marca-700"
                   >
-                    colar meu link
+                    não tenho um link de afiliada
                   </button>
-                </p>
-              )}
+                ) : (
+                  <p className="rounded-lg bg-tela px-3 py-2 text-xs text-tinta-fraca">
+                    Sem o seu link, a promoção não conta comissão pra você.{" "}
+                    <button
+                      onClick={() => setUsarLinkDaCasa(false)}
+                      className="font-semibold text-marca-700 underline underline-offset-2"
+                    >
+                      colar meu link
+                    </button>
+                  </p>
+                )}
+              </div>
+
+              <p className="rounded-lg bg-tela px-3 py-2 text-xs text-tinta-fraca">
+                Cansada de fazer isso a cada produto? Salve sua API da Shopee em{" "}
+                <strong>Configurações → API Shopee</strong> e o seu link passa a
+                sair sozinho.
+              </p>
             </div>
-          </div>
+          )}
 
           {/* Toggle da vitrine pública — vale pras duas abas. */}
           <div className="border-b border-black/[0.06] py-4">
@@ -369,10 +419,22 @@ export function ModalGerador({ produto, onClose, onDivulgou }: ModalGeradorProps
             </label>
             {avisaLinkGenerico && (
               <p className="mt-2.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-100">
-                Cole o <strong>seu</strong> link no passo 2 — senão a promoção
-                entra na vitrine mandando pro link genérico e você não ganha
-                comissão.
+                Cole o <strong>seu</strong> link acima — senão a promoção entra
+                na vitrine mandando pro link genérico e não conta comissão pra
+                você.
               </p>
+            )}
+
+            {adicionarNaVitrine && podeGerar && (
+              <button
+                onClick={() => {
+                  registrarSeMarcado();
+                  onClose();
+                }}
+                className="mt-3 w-full rounded-xl border border-marca-200 bg-marca-50 px-4 py-2.5 text-sm font-semibold text-marca-700 transition-colors hover:bg-marca-100"
+              >
+                Só adicionar à vitrine (sem gerar post)
+              </button>
             )}
           </div>
 

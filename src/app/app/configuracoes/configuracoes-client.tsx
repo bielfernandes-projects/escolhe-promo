@@ -60,13 +60,22 @@ export function ConfiguracoesClient({
             <div className="rounded-2xl bg-marca-50 p-5 text-sm text-tinta-fraca">
               <p className="font-semibold text-tinta">Pra que serve?</p>
               <p className="mt-1.5">
-                Sem isso, os links gerados no app usam a conta de afiliado do
-                Escolhe Promo. Colando suas credenciais da{" "}
-                <strong>Shopee Affiliate</strong>, os links passam a ser{" "}
-                <strong>seus</strong> e a comissão cai pra você.
+                Uma promoção só gera comissão pra você quando o link sai com o{" "}
+                <strong>seu</strong> link de afiliada da Shopee.
               </p>
               <p className="mt-2">
-                Você pega o App ID e o App Secret em{" "}
+                Salvando aqui o seu <strong>App ID</strong> e{" "}
+                <strong>App Secret</strong>, o app monta o seu link sozinho em
+                todo produto — você não precisa gerar link nenhum na hora de
+                divulgar.
+              </p>
+              <p className="mt-2">
+                Sem configurar, você tem que gerar o link de cada produto na
+                Shopee e colar no campo indicado no momento da divulgação. Se não
+                fizer isso, o link sai sem afiliação e você não ganha nada.
+              </p>
+              <p className="mt-2">
+                O App ID e o App Secret ficam em{" "}
                 <a
                   href="https://affiliate.shopee.com.br/open_api"
                   target="_blank"

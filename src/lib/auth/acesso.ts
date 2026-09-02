@@ -24,7 +24,11 @@ export async function temAcessoAtivo(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("[acesso] falha ao checar compras:", error.message);
+    // "JWT issued at future" e afins são relógio dessincronizado da máquina —
+    // transitório e sem ação. Só registra o que for de fato inesperado.
+    if (!/jwt|token/i.test(error.message)) {
+      console.error("[acesso] falha ao checar compras:", error.message);
+    }
     return true;
   }
 

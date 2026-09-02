@@ -21,9 +21,11 @@ const LIMITE = 48;
 export function VitrineClient({
   produtos,
   itensDivulgados,
+  temApiShopee,
 }: {
   produtos: Produto[];
   itensDivulgados: string[];
+  temApiShopee: boolean;
 }) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [ordenacao, setOrdenacao] = useState<Ordenacao>(ORDENACAO_PADRAO);
@@ -154,6 +156,7 @@ export function VitrineClient({
         <ModalGerador
           produto={selecionado}
           onClose={() => setSelecionado(null)}
+          temApiShopee={temApiShopee}
           onDivulgou={(itemId) =>
             setDivulgados((antes) => new Set(antes).add(itemId))
           }

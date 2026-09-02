@@ -43,13 +43,14 @@ export function FormularioShopee({ appIdSalvo }: Props) {
   return (
     <form
       onSubmit={aoEnviar}
+      autoComplete="off"
       className="rounded-2xl bg-superficie p-5 ring-1 ring-black/[0.06]"
     >
       <h2 className="text-base font-bold text-tinta">Sua API da Shopee</h2>
       <p className="mt-1 text-sm text-tinta-fraca">
         {salvo
-          ? `Credenciais salvas (App ID: ${salvo}). Os links das suas copies usam sua própria conta de afiliado.`
-          : "Sem credenciais, os links usam a conta padrão do Escolhe Promo."}
+          ? `Credenciais salvas (App ID: ${salvo}). Suas promoções já saem com o seu link de afiliada.`
+          : "Sem isso, os links gerados são os padrão da Shopee, sem afiliação."}
       </p>
 
       <label htmlFor="app-id" className="mt-3 block text-sm font-semibold">
@@ -57,8 +58,12 @@ export function FormularioShopee({ appIdSalvo }: Props) {
       </label>
       <input
         id="app-id"
+        name="shopee-app-id"
         required
         autoComplete="off"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-form-type="other"
         value={appId}
         onChange={(e) => setAppId(e.target.value)}
         placeholder={salvo ?? "Seu App ID da Shopee Affiliate"}
@@ -70,8 +75,12 @@ export function FormularioShopee({ appIdSalvo }: Props) {
       </label>
       <CampoSenha
         id="app-secret"
+        name="shopee-app-secret"
         required
-        autoComplete="off"
+        autoComplete="new-password"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-form-type="other"
         value={appSecret}
         onChange={(e) => setAppSecret(e.target.value)}
         placeholder="Seu App Secret da Shopee Affiliate"

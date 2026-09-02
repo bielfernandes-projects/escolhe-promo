@@ -4,6 +4,23 @@ import { createClient } from "@/lib/supabase/server";
 import { queryShopee } from "@/lib/shopee/client";
 import { descriptografar } from "@/lib/seguranca/criptografia";
 
+/** A afiliada já salvou App ID + App Secret da Shopee em Configurações. */
+export async function temCredencialShopee(): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data } = await supabase
+    .from("credenciais_afiliado")
+    .select("shopee_app_id, shopee_app_secret")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  return !!data?.shopee_app_id && !!data?.shopee_app_secret;
+}
+
 /**
  * Gera um link de afiliado assinado com as credenciais do PROPRIO usuario
  * (Integracao de Afiliado Propria), pra ele nao depender do Double-Dip.

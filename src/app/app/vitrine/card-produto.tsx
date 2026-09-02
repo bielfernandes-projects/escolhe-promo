@@ -27,9 +27,11 @@ export function CardProduto({ produto, onClick, jaDivulgado }: CardProdutoProps)
     >
       <div className="relative aspect-square overflow-hidden bg-tela">
         {jaDivulgado && (
-          <span className="pointer-events-none absolute -left-8 top-3.5 z-10 -rotate-45 bg-marca-600 px-9 py-1 text-center text-[10px] font-bold tracking-wide text-white uppercase shadow-sm">
-            Já divulgado
-          </span>
+          <div className="pointer-events-none absolute top-0 right-0 z-10 h-20 w-20 overflow-hidden">
+            <span className="absolute top-[14px] right-[-34px] w-[130px] rotate-45 bg-marca-600 py-[3px] text-center text-[9px] font-bold tracking-wide text-white uppercase shadow-sm">
+              Já divulgado
+            </span>
+          </div>
         )}
         {imagemQuebrou ? (
           <div className="flex h-full w-full items-center justify-center text-3xl opacity-40">

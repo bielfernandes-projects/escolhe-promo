@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   segredoConfere,
@@ -9,6 +9,43 @@ import { EVENTO_COMPRA_APROVADA, EVENTOS_REEMBOLSO } from "@/lib/cakto/tipos";
 import { dispararCompraMeta } from "@/lib/meta/conversions";
 
 const SECRET = process.env.CAKTO_WEBHOOK_SECRET;
+
+type Admin = ReturnType<typeof createAdminClient>;
+
+/**
+ * Acha o id de um usuario que ja existe, pelo e-mail.
+ *
+ * NAO usa `listUsers()` sem paginar: ele so devolve os 50 primeiros usuarios,
+ * entao um comprador recorrente alem do #50 caia em "user_sumido" (500), a
+ * Cakto reenviava 5x, todas falhavam, e o cliente pagava sem receber acesso.
+ *
+ * Caminho rapido: quem ja comprou tem linha em `compras` com o user_id.
+ * Fallback: varre as paginas do Auth (poucas nesta escala).
+ */
+async function acharUserPorEmail(
+  admin: Admin,
+  email: string,
+): Promise<string | null> {
+  const { data: compra } = await admin
+    .from("compras")
+    .select("user_id")
+    .eq("email", email)
+    .limit(1)
+    .maybeSingle();
+  if (compra?.user_id) return compra.user_id as string;
+
+  for (let pagina = 1; pagina <= 40; pagina++) {
+    const { data, error } = await admin.auth.admin.listUsers({
+      page: pagina,
+      perPage: 1000,
+    });
+    if (error) break;
+    const achado = data.users.find((u) => u.email === email);
+    if (achado) return achado.id;
+    if (data.users.length < 1000) break;
+  }
+  return null;
+}
 
 /**
  * POST /api/webhooks/cakto
@@ -115,13 +152,12 @@ export async function POST(request: NextRequest) {
         console.error("[webhook] falha ao criar user:", erroCriar);
         return NextResponse.json({ erro: "criar_user" }, { status: 500 });
       }
-      const { data: lista } = await supabase.auth.admin.listUsers();
-      const existente = lista?.users.find((u) => u.email === email);
+      const existente = await acharUserPorEmail(supabase, email);
       if (!existente) {
         console.error("[webhook] user não encontrado após conflito:", email);
         return NextResponse.json({ erro: "user_sumido" }, { status: 500 });
       }
-      userId = existente.id;
+      userId = existente;
     } else {
       userId = criado.user.id;
     }
@@ -141,24 +177,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ erro: "gravar_compra" }, { status: 500 });
     }
 
-    const { error: erroLink } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${request.nextUrl.origin}/auth/confirm?next=/app/vitrine`,
-        shouldCreateUser: false,
-      },
-    });
+    // O acesso (user + compra) ja esta gravado — a partir daqui e "melhor
+    // esforco". Sai DEPOIS da resposta pra Cakto: o handshake SMTP do Resend
+    // custava ~3s e, somado ao resto, empurrava o webhook pros 8s de timeout
+    // da Cakto, que entao reenviava e podia acabar desistindo.
+    const origem = request.nextUrl.origin;
+    const valorMeta = payload.data.baseAmount ?? 0;
 
-    if (erroLink) {
-      // Não é fatal: user e compra já existem. Dá pra reenviar o link à mão.
-      console.warn("[webhook] falha ao enviar magic link:", erroLink.message);
-    }
-
-    dispararCompraMeta({
-      email,
-      valor: payload.data.baseAmount ?? 0,
-      moeda: "BRL",
-      origem: request.nextUrl.origin,
+    after(async () => {
+      const { error: erroLink } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${origem}/auth/confirm?next=/app/vitrine`,
+          shouldCreateUser: false,
+        },
+      });
+      if (erroLink) {
+        console.warn("[webhook] falha ao enviar magic link:", erroLink.message);
+      }
+      await dispararCompraMeta({
+        email,
+        valor: valorMeta,
+        moeda: "BRL",
+        origem,
+      });
     });
 
     console.log(`[webhook] ok — ordem ${orderId} liberada pra ${email}`);

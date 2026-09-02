@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Produto } from "./tipos";
 import { deduplicarProdutos } from "./dedupe";
@@ -77,26 +77,44 @@ const COLUNAS_VITRINE =
   "item_id, nome, imagem_url, preco, taxa_comissao, comissao, vendas, avaliacao, taxa_desconto, nicho, offer_link, produto_link";
 
 /**
- * Le a Vitrine para o usuario logado. Passa pelo RLS: so enxerga quem tem uma
- * compra sem reembolso (ver migration 0007).
+ * Le a Vitrine.
+ *
+ * O catalogo e IGUAL pra todo usuario pagante num mesmo dia — o job diario
+ * reescreve a tabela inteira e ninguem mais escreve nela. Entao a leitura e
+ * cacheada 1h com `unstable_cache`: sem isso, cada navegacao na Vitrine puxava
+ * ~260 KB do Supabase, e a 50 clientes/dia (750+ carregamentos) isso estourava
+ * a cota de egress gratuita do Supabase (5 GB/mes) so com essa query.
+ *
+ * O controle de acesso NAO vive mais aqui — vive no layout de /app
+ * (`temAcessoAtivo`) e no proxy, que barram quem nao tem compra ativa antes de
+ * a pagina renderizar. Por isso o fetch usa a service role: a linha do catalogo
+ * nao e secreta (sao produtos publicos da Shopee) e o gate ja passou.
  */
+const lerCatalogoCru = unstable_cache(
+  async (folga: number): Promise<LinhaProduto[]> => {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("produtos")
+      .select(COLUNAS_VITRINE)
+      .order("comissao", { ascending: false })
+      .limit(folga);
+
+    if (error) {
+      throw new Error(`Nao deu pra ler a Vitrine: ${error.message}`);
+    }
+    return data as unknown as LinhaProduto[];
+  },
+  ["catalogo-vitrine"],
+  // Sem invalidacao por tag: o job diario roda 1x/dia, entao no maximo 1h
+  // depois dele todo mundo ja ve o catalogo novo. Ver as ~24 leituras/dia
+  // contra centenas de milhares sem cache.
+  { revalidate: 3600 },
+);
+
 export async function listarProdutos(limite = 700): Promise<Produto[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("produtos")
-    .select(COLUNAS_VITRINE)
-    // Puxa uma folga alem do limite: a deduplicacao corta linhas e sem folga o
-    // resultado final ficaria abaixo do pedido.
-    .order("comissao", { ascending: false })
-    .limit(Math.ceil(limite * 1.5));
-
-  if (error) {
-    throw new Error(`Nao deu pra ler a Vitrine: ${error.message}`);
-  }
-
-  return deduplicarProdutos(
-    (data as unknown as LinhaProduto[]).map(deLinha),
-  ).slice(0, limite);
+  // Folga alem do limite: a deduplicacao corta linhas.
+  const cru = await lerCatalogoCru(Math.ceil(limite * 1.5));
+  return deduplicarProdutos(cru.map(deLinha)).slice(0, limite);
 }
 
 /**

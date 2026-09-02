@@ -12,9 +12,10 @@ export function paginaAbrirNoNavegador(opts: {
 }): string {
   const { urlHttps, android } = opts;
 
-  // intent:// exige a URL sem o esquema https://
+  // intent:// exige a URL sem o esquema https://. Sem `package=`, o Android
+  // abre no navegador padrão (não força o Chrome, que pode não estar instalado).
   const semEsquema = urlHttps.replace(/^https?:\/\//, "");
-  const intentUrl = `intent://${semEsquema}#Intent;scheme=https;package=com.android.chrome;end`;
+  const intentUrl = `intent://${semEsquema}#Intent;scheme=https;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end`;
 
   const jsAndroid = android
     ? `try { window.location.href = ${JSON.stringify(intentUrl)}; } catch (e) {}`

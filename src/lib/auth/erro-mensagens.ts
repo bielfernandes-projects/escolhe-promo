@@ -23,6 +23,12 @@ const TRADUCOES: Record<string, string> = {
   "Email already exists":
     "Esse e-mail já está cadastrado.",
 
+  // Senha
+  "Password should be at least 6 characters":
+    "A senha precisa ter no mínimo 6 caracteres.",
+  "New password should be different from the old password":
+    "A nova senha precisa ser diferente da atual.",
+
   // Network/connection
   "Failed to fetch":
     "Erro de conexão. Verifique sua internet.",

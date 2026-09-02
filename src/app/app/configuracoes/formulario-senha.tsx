@@ -16,7 +16,10 @@ export function FormularioSenha() {
     setMensagem(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password: senha });
+    const { error } = await supabase.auth.updateUser({
+      password: senha,
+      data: { senha_criada: true },
+    });
 
     if (error) {
       setMensagem({ tipo: "erro", texto: error.message });

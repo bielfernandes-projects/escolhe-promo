@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Cabecalho } from "./cabecalho";
+import { ModalCriarSenha } from "./modal-criar-senha";
 
 /**
  * Protege tudo que esta sob /app. So uma sessao do Supabase — nascida do magic
@@ -23,9 +24,14 @@ export default async function AppLayout({
     redirect("/login");
   }
 
+  // Primeiro acesso (entrou via magic link, sem senha ainda): trava o app até
+  // criar uma senha. A flag é gravada pelo próprio modal.
+  const precisaCriarSenha = !user.user_metadata?.senha_criada;
+
   return (
     <>
       <Cabecalho />
+      {precisaCriarSenha && <ModalCriarSenha email={user.email ?? ""} />}
       {children}
     </>
   );

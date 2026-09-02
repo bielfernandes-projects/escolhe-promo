@@ -37,12 +37,20 @@ export default function SucessoPage({
           Você acaba de ganhar acesso vitalício ao Escolhe Promo.
         </p>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-3 text-left">
           <p className="text-sm font-semibold text-tinta">
-            Abra seu e-mail agora. Você receberá um link pra entrar no app.
+            Abra seu e-mail agora — você vai receber um link pra entrar.
           </p>
           <p className="text-xs text-tinta-fraca">
-            Se não aparecer em poucos minutos, verifique a pasta de spam.
+            Não chegou em 5 minutos? Olhe o spam. Se ainda assim nada, entre em{" "}
+            <Link
+              href="/login"
+              className="font-semibold text-marca-700 underline underline-offset-2"
+            >
+              escolhepromo.com.br/login
+            </Link>
+            , toque na aba <strong>Link</strong> e peça um novo com o{" "}
+            <strong>mesmo e-mail da compra</strong>.
           </p>
         </div>
 
@@ -53,10 +61,10 @@ export default function SucessoPage({
         )}
 
         <Link
-          href="/"
+          href="/login"
           className="mt-6 inline-flex rounded-xl bg-marca-700 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-marca-600 active:scale-[0.99]"
         >
-          Voltar pra home
+          Ir pro login
         </Link>
       </div>
     </main>

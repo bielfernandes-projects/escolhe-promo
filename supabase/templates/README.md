@@ -22,8 +22,10 @@ do Escolhe Promo via Resend.
 
 ## Variáveis
 
-Ambos os templates usam `{{ .ConfirmationURL }}` — o Supabase substitui automaticamente
-pelo link de acesso. Não mexe nessa variável.
+Os templates montam o link à mão com `{{ .SiteURL }}` + `{{ .TokenHash }}`, apontando
+direto pra `/auth/confirm`. **Não troca por `{{ .ConfirmationURL }}`**: aquele passa pelo
+`/verify` do Supabase e devolve o token no fragmento da URL, o que quebra o "abrir no
+navegador" (o token seria consumido dentro do app de e-mail antes do redirect).
 
 ## Customização
 

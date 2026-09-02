@@ -2,6 +2,8 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { excedeuLimite } from "@/lib/seguranca/limite-tentativas";
+import { ehNavegadorInApp, ehAndroid } from "@/lib/auth/navegador-in-app";
+import { paginaAbrirNoNavegador } from "@/lib/auth/pagina-abrir-navegador";
 
 /**
  * Onde o magic link vira sessao de verdade.
@@ -25,6 +27,23 @@ export async function GET(request: NextRequest) {
 
   const tokenHash = searchParams.get("token_hash");
   const tipo = searchParams.get("type") as EmailOtpType | null;
+
+  // In-app browser (Gmail, WhatsApp...): NAO consome o token aqui. Serve uma
+  // pagina que empurra pro navegador padrao — o token segue valido pro clique
+  // de verdade. Sem `nav=1`, que a propria pagina anexa pra evitar loop.
+  const ua = request.headers.get("user-agent");
+  if (
+    tokenHash &&
+    !searchParams.has("nav") &&
+    ehNavegadorInApp(ua)
+  ) {
+    const urlHttps = new URL(request.nextUrl);
+    urlHttps.searchParams.set("nav", "1");
+    return new NextResponse(
+      paginaAbrirNoNavegador({ urlHttps: urlHttps.toString(), android: ehAndroid(ua) }),
+      { headers: { "content-type": "text/html; charset=utf-8" } },
+    );
+  }
 
   // token_hash e um segredo longo e aleatorio, entao forca bruta de verdade
   // nao e viavel — mas limitar por IP ainda barata enumeracao/DoS baratos.

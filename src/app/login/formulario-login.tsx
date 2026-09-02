@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { traduzirErro } from "@/lib/auth/erro-mensagens";
 import { entrarComSenha as entrarComSenhaAction } from "./acoes";
 
 type Modo = "senha" | "link" | "recuperar";
@@ -28,7 +29,7 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
   async function entrarComSenha() {
     const resultado = await entrarComSenhaAction(email, senha);
     if (!resultado.ok) {
-      setErro(resultado.erro ?? "Não deu pra entrar.");
+      setErro(traduzirErro(resultado.erro));
       return;
     }
     router.refresh();
@@ -44,7 +45,7 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
       },
     });
     if (error) {
-      setErro(error.message);
+      setErro(traduzirErro(error.message));
       return;
     }
     setLinkEnviado(true);
@@ -56,7 +57,7 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
       redirectTo: `${window.location.origin}/auth/confirm?type=recovery&next=/app/configuracoes`,
     });
     if (error) {
-      setErro(error.message);
+      setErro(traduzirErro(error.message));
       return;
     }
     setRecuperarEnviado(true);

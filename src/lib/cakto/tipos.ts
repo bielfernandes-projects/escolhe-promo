@@ -19,9 +19,9 @@ export type CaktoWebhookPayload = {
     baseAmount?: number;
     checkoutUrl?: string;
     offer_type?: string;
-    customer: {
+    customer?: {
       name?: string;
-      email: string;
+      email?: string;
       docNumber?: string;
       docType?: string;
     };
@@ -41,3 +41,6 @@ export type CaktoWebhookPayload = {
 
 /** O único evento que libera acesso. */
 export const EVENTO_COMPRA_APROVADA = "purchase_approved";
+
+/** Eventos que revogam o acesso (reembolso, contestação de cartão). */
+export const EVENTOS_REEMBOLSO = ["refund", "chargeback"] as const;

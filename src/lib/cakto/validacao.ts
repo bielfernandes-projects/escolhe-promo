@@ -14,8 +14,13 @@ export function segredoConfere(recebido: unknown, esperado: string): boolean {
 }
 
 /**
- * Checagem de estrutura — não é segurança, é evitar gravar estado quebrado
- * se a Cakto mudar o esquema.
+ * Estrutura mínima comum a todo evento: `secret`, `event` e `data.id`. Não é
+ * segurança, é evitar processar lixo se a Cakto mudar o esquema.
+ *
+ * O e-mail do comprador NÃO entra aqui de propósito: eventos como `refund` só
+ * precisam do `data.id` pra achar a compra, e exigir `customer.email` faria o
+ * reembolso ser rejeitado. Quem precisa do e-mail (a compra aprovada) checa
+ * com `temEmailComprador`.
  */
 export function validarPayloadCakto(
   payload: unknown,
@@ -27,13 +32,11 @@ export function validarPayloadCakto(
   if (typeof p.data !== "object" || !p.data) return false;
 
   const data = p.data as Record<string, unknown>;
-  if (typeof data.id !== "string") return false;
+  return typeof data.id === "string";
+}
 
-  const customer = data.customer as Record<string, unknown> | undefined;
-  return (
-    typeof customer === "object" &&
-    !!customer &&
-    typeof customer.email === "string" &&
-    customer.email.includes("@")
-  );
+/** A compra aprovada precisa do e-mail pra criar o usuário. */
+export function temEmailComprador(payload: CaktoWebhookPayload): boolean {
+  const email = payload.data.customer?.email;
+  return typeof email === "string" && email.includes("@");
 }

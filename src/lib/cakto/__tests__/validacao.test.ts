@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { segredoConfere, validarPayloadCakto } from "../validacao";
+import {
+  segredoConfere,
+  validarPayloadCakto,
+  temEmailComprador,
+} from "../validacao";
 
 const SECRET = "ef9da319-dceb-41ac-905d-8cc8479368f9";
 
@@ -36,9 +40,9 @@ describe("validarPayloadCakto", () => {
     expect(validarPayloadCakto(payloadValido)).toBe(true);
   });
 
-  it("rejeita sem customer.email", () => {
-    const semEmail = { ...payloadValido.data, customer: { name: "John Doe" } };
-    expect(validarPayloadCakto({ ...payloadValido, data: semEmail })).toBe(false);
+  it("aceita evento sem customer (ex: refund só com data.id)", () => {
+    const refund = { secret: SECRET, event: "refund", data: { id: "ord_1" } };
+    expect(validarPayloadCakto(refund)).toBe(true);
   });
 
   it("rejeita sem data.id", () => {
@@ -57,5 +61,18 @@ describe("validarPayloadCakto", () => {
     expect(validarPayloadCakto(null)).toBe(false);
     expect(validarPayloadCakto("string")).toBe(false);
     expect(validarPayloadCakto(42)).toBe(false);
+  });
+});
+
+describe("temEmailComprador", () => {
+  it("true quando tem e-mail válido", () => {
+    expect(temEmailComprador(payloadValido)).toBe(true);
+  });
+
+  it("false sem customer ou sem e-mail", () => {
+    expect(temEmailComprador({ ...payloadValido, data: { id: "x" } })).toBe(false);
+    expect(
+      temEmailComprador({ ...payloadValido, data: { id: "x", customer: { name: "J" } } }),
+    ).toBe(false);
   });
 });

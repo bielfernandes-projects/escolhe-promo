@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { temAcessoAtivo } from "@/lib/auth/acesso";
 import { Cabecalho } from "./cabecalho";
 import { ModalCriarSenha } from "./modal-criar-senha";
 
@@ -9,6 +10,8 @@ import { ModalCriarSenha } from "./modal-criar-senha";
  *
  * Quem nao tem sessao vai pro /login, nao pra landing: mandar pra landing era o
  * que fazia o app parecer quebrado, porque nao havia onde entrar.
+ *
+ * Quem teve a compra reembolsada tambem cai fora aqui (ver temAcessoAtivo).
  */
 export default async function AppLayout({
   children,
@@ -22,6 +25,10 @@ export default async function AppLayout({
 
   if (!user) {
     redirect("/login");
+  }
+
+  if (!(await temAcessoAtivo(supabase, user.id))) {
+    redirect("/acesso-encerrado");
   }
 
   // Primeiro acesso (entrou via magic link, sem senha ainda): trava o app até

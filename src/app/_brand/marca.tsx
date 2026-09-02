@@ -31,11 +31,11 @@ export function MarcaSimbolo({
   );
 }
 
-/** "Escolhe Promo" — "Eita" na tinta, "Promo" no laranja da marca. */
+/** "Escolhe Promo" — "Escolhe" na tinta, "Promo" no laranja da marca. */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={`font-bold tracking-tight ${className ?? ""}`}>
-      Eita<span className="text-marca-600">Promo</span>
+      Escolhe<span className="text-marca-600"> Promo</span>
     </span>
   );
 }

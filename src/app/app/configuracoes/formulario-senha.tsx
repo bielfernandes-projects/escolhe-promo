@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { CampoSenha } from "@/app/_ui/campo-senha";
 
 export function FormularioSenha() {
   const [senha, setSenha] = useState("");
@@ -40,16 +41,15 @@ export function FormularioSenha() {
       <label htmlFor="nova-senha" className="mt-3 block text-sm font-semibold">
         Nova senha
       </label>
-      <input
+      <CampoSenha
         id="nova-senha"
-        type="password"
         autoComplete="new-password"
         required
         minLength={6}
         value={senha}
         onChange={(e) => setSenha(e.target.value)}
         placeholder="••••••••"
-        className="mt-1.5 w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
+        className="mt-1.5"
       />
 
       {mensagem && (

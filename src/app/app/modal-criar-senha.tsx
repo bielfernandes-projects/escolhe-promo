@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { traduzirErro } from "@/lib/auth/erro-mensagens";
+import { CampoSenha } from "@/app/_ui/campo-senha";
 
 /**
  * Modal bloqueante no primeiro acesso (entrou via magic link, ainda sem senha).
@@ -52,9 +53,8 @@ export function ModalCriarSenha({ email }: { email: string }) {
           <label htmlFor="senha-inicial" className="block text-sm font-semibold">
             Senha
           </label>
-          <input
+          <CampoSenha
             id="senha-inicial"
-            type="password"
             autoComplete="new-password"
             required
             minLength={6}
@@ -62,7 +62,7 @@ export function ModalCriarSenha({ email }: { email: string }) {
             onChange={(e) => setSenha(e.target.value)}
             placeholder="Mínimo 6 caracteres"
             autoFocus
-            className="mt-1.5 w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none transition-colors focus:border-marca-500 focus:ring-2 focus:ring-marca-200"
+            className="mt-1.5"
           />
 
           <p className="mt-2 text-xs text-tinta-fraca">

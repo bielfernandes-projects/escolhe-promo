@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { traduzirErro } from "@/lib/auth/erro-mensagens";
+import { CampoSenha } from "@/app/_ui/campo-senha";
 import { entrarComSenha as entrarComSenhaAction } from "./acoes";
 
 type Modo = "senha" | "link" | "recuperar";
@@ -152,15 +153,14 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
           <label className="mt-4 block text-sm font-semibold" htmlFor="senha">
             Senha
           </label>
-          <input
+          <CampoSenha
             id="senha"
-            type="password"
             autoComplete="current-password"
             required
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             placeholder="••••••••"
-            className="mt-1.5 w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none transition-colors focus:border-marca-500 focus:ring-2 focus:ring-marca-200"
+            className="mt-1.5"
           />
         </>
       )}

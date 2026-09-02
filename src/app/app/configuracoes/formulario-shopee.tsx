@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { salvarCredencialShopee } from "./acoes";
+import { CampoSenha } from "@/app/_ui/campo-senha";
 
 type Props = { appIdSalvo: string | null };
 
@@ -67,15 +68,14 @@ export function FormularioShopee({ appIdSalvo }: Props) {
       <label htmlFor="app-secret" className="mt-3 block text-sm font-semibold">
         App Secret
       </label>
-      <input
+      <CampoSenha
         id="app-secret"
-        type="password"
         required
         autoComplete="off"
         value={appSecret}
         onChange={(e) => setAppSecret(e.target.value)}
         placeholder="Seu App Secret da Shopee Affiliate"
-        className="mt-1.5 w-full rounded-xl border border-black/10 bg-superficie px-4 py-3 outline-none focus:border-marca-500"
+        className="mt-1.5"
       />
 
       {mensagem && (

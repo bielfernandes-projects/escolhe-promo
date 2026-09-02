@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seu acesso ao Escolhe Promo</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f8f8f8;">
+  <div style="background: #f8f8f8; padding: 40px 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div style="max-width: 480px; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);">
+
+      <!-- Logo -->
+      <div style="text-align: center; margin-bottom: 32px;">
+        <div style="font-size: 32px; font-weight: 800; color: #c43a1e; letter-spacing: -0.02em;">Escolhe Promo</div>
+      </div>
+
+      <!-- Heading -->
+      <h1 style="font-size: 20px; font-weight: 700; margin: 0 0 16px 0; text-align: center; color: #1a1a1a;">
+        Toque pra entrar na sua conta
+      </h1>
+
+      <!-- Copy -->
+      <p style="font-size: 14px; line-height: 1.6; color: #666; margin: 0 0 32px 0; text-align: center;">
+        Seu link de acesso expira em 24 horas.
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align: center; margin-bottom: 32px;">
+        <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: #c43a1e; color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; line-height: 1; transition: background 200ms;">
+          Entrar na Vitrine
+        </a>
+      </div>
+
+      <!-- Fallback link -->
+      <p style="font-size: 12px; color: #999; margin: 0 0 16px 0; text-align: center;">
+        Ou copia e cola esse link no navegador:<br>
+        <code style="word-break: break-all; color: #666;">{{ .ConfirmationURL }}</code>
+      </p>
+
+      <!-- Legal -->
+      <hr style="border: none; border-top: 1px solid #e8e8e8; margin: 24px 0;">
+      <p style="font-size: 11px; line-height: 1.5; color: #999; margin: 0; text-align: center;">
+        Não pediu esse e-mail? Ignore. O link é pessoal — não compartilha com ninguém.<br>
+        <strong>Escolhe Promo</strong> &middot; Gerador de copy para afiliado
+      </p>
+
+    </div>
+  </div>
+</body>
+</html>

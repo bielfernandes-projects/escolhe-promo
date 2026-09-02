@@ -1,4 +1,4 @@
-# Bootstrap Checklist — Eita Promo
+# Bootstrap Checklist — Escolhe Promo
 
 Checklist de setup inicial. **Todo item abaixo está concluído** — o projeto
 está em produção. Pra estado atual e próximos passos, ver `PLAN.md` (seções
@@ -13,9 +13,9 @@ está em produção. Pra estado atual e próximos passos, ver `PLAN.md` (seçõe
 
 ### Infraestrutura
 - [x] Next.js 16 (TypeScript, App Router, Tailwind CSS)
-- [x] Vercel: projeto `eita-promo`, deploy automático a cada push no `main`
-- [x] Domínio de produção: `https://eitapromo.bf.dev.br` (DNS gerenciado pela Vercel)
-- [x] Repositório GitHub privado: `github.com/bielfernandes-projects/eita-promo`
+- [x] Vercel: projeto `escolhe-promo`, deploy automático a cada push no `main`
+- [x] Domínio de produção: `https://www.escolhepromo.com.br` (DNS gerenciado pela Vercel)
+- [x] Repositório GitHub privado: `github.com/bielfernandes-projects/escolhe-promo`
 - [x] Supabase project (`rorlucaegorqgdtbqfeb`) com todas as tabelas e RLS
 - [x] SMTP próprio (Resend) configurado no Supabase Auth — o provedor padrão
       tem limite de envio baixo demais pra tráfego pago

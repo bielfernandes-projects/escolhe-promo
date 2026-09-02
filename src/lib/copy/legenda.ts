@@ -74,8 +74,8 @@ async function chamarModelo(modelo: string, prompt: string): Promise<string | nu
         Authorization: `Bearer ${chave}`,
         "Content-Type": "application/json",
         // O OpenRouter usa estes dois pra atribuir o tráfego ao app.
-        "HTTP-Referer": "https://eitapromo.bf.dev.br",
-        "X-Title": "Eita Promo",
+        "HTTP-Referer": "https://www.escolhepromo.com.br",
+        "X-Title": "Escolhe Promo",
       },
       body: JSON.stringify({
         model: modelo,

@@ -1,4 +1,4 @@
-# Eita Promo
+# Escolhe Promo
 
 Micro SaaS B2C que gera copy e imagens para afiliados Shopee divulgarem produtos no WhatsApp e Instagram.
 
@@ -47,7 +47,7 @@ Oferta complementar adicionada no checkout com um clique, sem interromper a comp
 Em Configurações o usuário salva App ID/Secret da própria conta Shopee (Secret criptografado em repouso). Serve de fallback do fluxo do modal: se ele clicar em "não tenho um link de afiliado", o app tenta gerar o link pessoal dele via `generateShortLink` a partir da URL do produto; sem credencial ou em caso de falha, cai no link do dono (Double-Dip). O caminho principal continua sendo o usuário colar o próprio link.
 
 **Marca**:
-O símbolo do Eita Promo — a arte do Canva (`arte-canva/logo.png`, servida como `/icon.png`) (balão de conversa + etiqueta de preço + raio, sem o nome escrito). Vive em `src/app/_brand/marca.tsx`: `MarcaSimbolo` é só a arte, `Wordmark` é o texto "Eita**Promo**", `Marca` é o lockup dos dois. Os ícones do site são PNGs estáticos em `src/app/` (`icon.png`, `apple-icon.png`, `favicon.ico`).
+O símbolo do Escolhe Promo — a arte do Canva (`arte-canva/logo.png`, servida como `/icon.png`) (balão de conversa + etiqueta de preço + raio, sem o nome escrito). Vive em `src/app/_brand/marca.tsx`: `MarcaSimbolo` é só a arte, `Wordmark` é o texto "Escolhe **Promo**", `Marca` é o lockup dos dois. Os ícones do site são PNGs estáticos em `src/app/` (`icon.png`, `apple-icon.png`, `favicon.ico`).
 
 **Gerar novos produtos**:
 Botão da Vitrine que avança uma página do catálogo do dia (48 Produtos por vez de ~700). É paginação client-side — não busca nada novo na Shopee. O catálogo em si só é reescrito pelo job diário.

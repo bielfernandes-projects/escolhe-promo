@@ -32,8 +32,8 @@ export default async function OpengraphImage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img width={148} height={148} src={logoSrc} alt="" style={{ borderRadius: 40 }} />
           <div style={{ display: "flex", fontSize: 64, fontWeight: 800, color: "#18181b" }}>
-            <span>Eita</span>
-            <span style={{ color: "#ee4d2d" }}>Promo</span>
+            <span>Escolhe</span>
+            <span style={{ color: "#ee4d2d" }}>&nbsp;Promo</span>
           </div>
         </div>
         <div

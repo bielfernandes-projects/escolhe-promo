@@ -1,4 +1,4 @@
-# Eita Promo — Copiou, postou, vendeu
+# Escolhe Promo — Copiou, postou, vendeu
 
 Micro SaaS B2C que resolve a dor operacional de afiliados iniciantes da Shopee (ex.: donas de casa buscando renda extra), automatizando a criação de copy persuasiva e de imagens (posts/stories) pra divulgação de produtos no WhatsApp e Instagram — sem depender de LLMs caros, pra preservar a margem de um Lifetime Deal de baixo ticket.
 
@@ -55,7 +55,7 @@ Micro SaaS B2C que resolve a dor operacional de afiliados iniciantes da Shopee (
 
 ## Estado atual (31/08/2026)
 
-Em produção: `https://eitapromo.bf.dev.br` (Vercel, deploy automático a cada push no `main`). Repo: `github.com/bielfernandes-projects/eita-promo` (privado).
+Em produção: `https://www.escolhepromo.com.br` (Vercel, deploy automático a cada push no `main`). Repo: `github.com/bielfernandes-projects/escolhe-promo` (privado).
 
 **Shipped nesta sessão, além do MVP inicial:**
 - Login com senha + magic link, ordenação da Vitrine (padrão "Mais vendidos"), aba de Configurações, botões de compartilhamento direto (WhatsApp / Web Share API).

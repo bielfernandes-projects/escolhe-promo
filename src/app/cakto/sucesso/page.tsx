@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Marca } from "@/app/_brand/marca";
 
-export const metadata = { title: "Compra confirmada — Escolhe Promo" };
+export const metadata = {
+  title: "Compra confirmada — Escolhe Promo",
+  robots: { index: false, follow: false },
+};
 
 export default function SucessoPage({
   searchParams,

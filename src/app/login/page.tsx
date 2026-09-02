@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { FormularioLogin } from "./formulario-login";
 import { Marca } from "@/app/_brand/marca";
 
-export const metadata = { title: "Entrar" };
+export const metadata = { title: "Entrar", robots: { index: false, follow: false } };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const supabase = await createClient();

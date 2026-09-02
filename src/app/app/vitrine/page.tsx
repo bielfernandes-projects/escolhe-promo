@@ -4,7 +4,10 @@ import { listarItensDivulgados } from "./divulgacao-acao";
 import { temCredencialShopee } from "./link-afiliado";
 import { VitrineClient } from "./vitrine-client";
 
-export const metadata = { title: "Vitrine do dia — Escolhe Promo" };
+export const metadata = {
+  title: "Vitrine do dia — Escolhe Promo",
+  robots: { index: false, follow: false },
+};
 
 /**
  * Server Component de proposito: a Vitrine sai do Supabase, ja filtrada pelo

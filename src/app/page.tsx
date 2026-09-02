@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { AppShowcase } from "./_landing/app-showcase";
+import type { Metadata } from "next";
 import { Marca, MarcaSimbolo } from "./_brand/marca";
+import { DadosEstruturados, produto } from "@/lib/seo/dados-estruturados";
 
 /** Ajuste aqui se mudar a oferta. */
 const PRECO = "47";
+/** Mesmo valor no formato que o schema.org espera. */
+const PRECO_DECIMAL = "47.00";
 const CHECKOUT = process.env.NEXT_PUBLIC_CAKTO_CHECKOUT_URL ?? "#";
 
 const PASSOS = [
@@ -88,12 +92,29 @@ const FAQ = [
   },
 ];
 
+export const metadata: Metadata = {
+  // O título da home não usa o template "%s · Escolhe Promo": ele já é a marca.
+  title: "Escolhe Promo — copy e imagem prontas pra afiliada da Shopee",
+  description:
+    "Não sabe o que postar pra vender como afiliada da Shopee? O Escolhe Promo abre uma vitrine de produtos todo dia e monta o texto e a imagem prontos pro WhatsApp e pro Instagram. R$ 47 uma vez só, sem mensalidade.",
+  alternates: { canonical: "/" },
+  keywords: [
+    "afiliado shopee",
+    "como divulgar produtos da shopee",
+    "achadinhos shopee",
+    "copy pronta para afiliado",
+    "gerador de imagem para afiliado",
+    "programa de afiliados shopee",
+  ],
+};
+
 const BOTAO_PRIMARIO =
   "inline-flex items-center justify-center rounded-2xl bg-marca-700 px-8 py-4 text-lg font-bold text-white shadow-[0_12px_30px_-10px_rgba(196,58,30,0.6)] transition-all duration-200 hover:bg-marca-600 hover:shadow-[0_16px_40px_-12px_rgba(196,58,30,0.7)] active:scale-[0.98] active:bg-marca-800";
 
 export default function LandingPage() {
   return (
     <div className="flex flex-1 flex-col overflow-x-clip pb-24 sm:pb-0">
+      <DadosEstruturados dados={produto(PRECO_DECIMAL, FAQ)} />
       <header className="mx-auto w-full max-w-6xl px-5 py-5">
         <div className="flex items-center justify-between">
           <Marca simbolo={34} texto="text-lg" />

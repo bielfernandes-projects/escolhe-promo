@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Marca } from "@/app/_brand/marca";
+import {
+  DadosEstruturados,
+  vitrineDaAfiliada,
+} from "@/lib/seo/dados-estruturados";
 import { VitrinePublicaClient, type ItemVitrine } from "./vitrine-publica-client";
 
 type Params = { handle: string };
@@ -64,6 +68,10 @@ export async function generateMetadata({
     title: titulo,
     description: `As promoções da Shopee que a ${dados.nome} separou. Toque e compre com o desconto.`,
     openGraph: { title: titulo, type: "website" },
+    robots:
+      dados.itens.length === 0
+        ? { index: false, follow: true }
+        : { index: true, follow: true },
     alternates: { canonical: `/@${dados.handle}` },
   };
 }
@@ -84,6 +92,15 @@ export default async function VitrinePublicaPage({
 
   return (
     <div className="flex flex-1 flex-col">
+      {dados.itens.length > 0 && (
+        <DadosEstruturados
+          dados={vitrineDaAfiliada({
+            nome: dados.nome,
+            handle: dados.handle,
+            itens: dados.itens,
+          })}
+        />
+      )}
       <header className="border-b border-black/[0.06] bg-superficie">
         <div className="mx-auto w-full max-w-5xl px-5 py-8 text-center">
           <h1 className="fonte-display text-3xl text-tinta sm:text-4xl">

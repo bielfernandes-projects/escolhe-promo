@@ -2,7 +2,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ConfiguracoesClient } from "./configuracoes-client";
 
-export const metadata = { title: "Configurações — Escolhe Promo" };
+export const metadata = {
+  title: "Configurações — Escolhe Promo",
+  robots: { index: false, follow: false },
+};
 
 export default async function ConfiguracoesPage() {
   const supabase = await createClient();

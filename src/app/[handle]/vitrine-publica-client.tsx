@@ -57,8 +57,11 @@ export function VitrinePublicaClient({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.imagem_url}
-                  alt=""
+                  alt={item.nome}
                   loading="lazy"
+                  decoding="async"
+                  width={400}
+                  height={400}
                   className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
                 />
               </div>

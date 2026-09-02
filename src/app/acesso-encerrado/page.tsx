@@ -1,7 +1,10 @@
 import { Marca } from "@/app/_brand/marca";
 import { SairNoCarregar } from "./sair-no-carregar";
 
-export const metadata = { title: "Acesso encerrado — Escolhe Promo" };
+export const metadata = {
+  title: "Acesso encerrado — Escolhe Promo",
+  robots: { index: false, follow: false },
+};
 
 /**
  * Onde cai quem teve a compra reembolsada. É uma página à parte, fora de /app e

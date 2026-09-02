@@ -1,6 +1,9 @@
 ﻿import { ConfirmarNoCliente } from "./confirmar-no-cliente";
 
-export const metadata = { title: "Entrando — Escolhe Promo" };
+export const metadata = {
+  title: "Entrando — Escolhe Promo",
+  robots: { index: false, follow: false },
+};
 
 /**
  * Recebe o caso em que o token veio no fragmento da URL, que so o navegador

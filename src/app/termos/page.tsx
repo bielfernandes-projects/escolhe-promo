@@ -1,6 +1,11 @@
 ﻿import Link from "next/link";
 
-export const metadata = { title: "Termos de Uso — Escolhe Promo" };
+export const metadata = {
+  title: "Termos de Uso — Escolhe Promo",
+  description:
+    "Termos de uso do Escolhe Promo: o que o acesso vitalício inclui, a garantia de 7 dias e as regras de uso.",
+  alternates: { canonical: "/termos" },
+};
 
 /**
  * Rascunho informado por LGPD/CDC, nao revisao juridica — vale como ponto de

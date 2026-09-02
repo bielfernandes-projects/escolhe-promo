@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { MetaPixel } from "@/lib/meta/pixel";
+import { SITE_URL } from "@/lib/seo/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://escolhepromo.com.br"),
+  // Precisa ser o www: o apex responde 308 e o og:image acabava apontando
+  // pra uma URL que redireciona — o WhatsApp nao segue e o preview do link
+  // ficava sem imagem. Ver src/lib/seo/site.ts.
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Escolhe Promo — Copiou, postou, vendeu",
     template: "%s · Escolhe Promo",

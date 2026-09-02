@@ -1,6 +1,11 @@
 ﻿import Link from "next/link";
 
-export const metadata = { title: "Política de Privacidade — Escolhe Promo" };
+export const metadata = {
+  title: "Política de Privacidade — Escolhe Promo",
+  description:
+    "Como o Escolhe Promo trata seus dados: o que é coletado, com quem é compartilhado e como pedir a exclusão.",
+  alternates: { canonical: "/privacidade" },
+};
 
 export default function PrivacidadePage() {
   return (

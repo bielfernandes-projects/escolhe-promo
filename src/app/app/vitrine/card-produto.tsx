@@ -27,8 +27,8 @@ export function CardProduto({ produto, onClick, jaDivulgado }: CardProdutoProps)
     >
       <div className="relative aspect-square overflow-hidden bg-tela">
         {jaDivulgado && (
-          <div className="pointer-events-none absolute top-0 right-0 z-10 h-20 w-20 overflow-hidden">
-            <span className="absolute top-[14px] right-[-34px] w-[130px] rotate-45 bg-marca-600 py-[3px] text-center text-[9px] font-bold tracking-wide text-white uppercase shadow-sm">
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-white/25">
+            <span className="-rotate-[8deg] rounded-md border-2 border-marca-600 bg-white/90 px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-marca-600 uppercase shadow-sm">
               Já divulgado
             </span>
           </div>
@@ -52,7 +52,7 @@ export function CardProduto({ produto, onClick, jaDivulgado }: CardProdutoProps)
             crossOrigin="anonymous"
             onError={() => setImagemQuebrou(true)}
             className={`h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06] ${
-              jaDivulgado ? "opacity-60 grayscale" : ""
+              jaDivulgado ? "grayscale" : ""
             }`}
           />
         )}

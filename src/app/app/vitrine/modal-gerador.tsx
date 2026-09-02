@@ -253,7 +253,7 @@ export function ModalGerador({
           transform: arrastoY ? `translateY(${arrastoY}px)` : undefined,
           transition: arrastando ? "none" : "transform .2s ease-out",
         }}
-        className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-superficie shadow-2xl sm:max-h-[88vh] sm:rounded-3xl"
+        className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-superficie pb-3 shadow-2xl sm:max-h-[88vh] sm:rounded-2xl"
       >
         {/* Alcinha de bottom-sheet: arraste pra baixo pra fechar (no celular). */}
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-black/15 sm:hidden" />
@@ -294,7 +294,7 @@ export function ModalGerador({
 
         <div
           ref={rolagemRef}
-          className="flex-1 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-5"
+          className="flex-1 overflow-y-auto overscroll-contain px-4 pb-8 sm:px-5"
         >
           {/* Passos do link — mudam conforme ela já tem a API configurada. */}
           {temApiShopee ? (
@@ -425,7 +425,7 @@ export function ModalGerador({
               </p>
             )}
 
-            {adicionarNaVitrine && podeGerar && (
+            {adicionarNaVitrine && (
               <button
                 onClick={() => {
                   registrarSeMarcado();

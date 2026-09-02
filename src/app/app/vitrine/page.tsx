@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import { listarProdutos } from "@/lib/produtos/repositorio";
+import { listarItensDivulgados } from "./divulgacao-acao";
 import { VitrineClient } from "./vitrine-client";
 
 export const metadata = { title: "Vitrine do dia — Escolhe Promo" };
@@ -10,7 +11,10 @@ export const metadata = { title: "Vitrine do dia — Escolhe Promo" };
  * o que arrastava o app secret pro bundle e falhava sempre.
  */
 export default async function VitrinePage() {
-  const produtos = await listarProdutos(800);
+  const [produtos, itensDivulgados] = await Promise.all([
+    listarProdutos(800),
+    listarItensDivulgados(),
+  ]);
 
   if (produtos.length === 0) {
     return (
@@ -31,5 +35,7 @@ export default async function VitrinePage() {
     );
   }
 
-  return <VitrineClient produtos={produtos} />;
+  return (
+    <VitrineClient produtos={produtos} itensDivulgados={itensDivulgados} />
+  );
 }

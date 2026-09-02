@@ -6,6 +6,8 @@ import type { Produto } from "@/lib/produtos/tipos";
 type CardProdutoProps = {
   produto: Produto;
   onClick: (produto: Produto) => void;
+  /** Já compartilhado por essa afiliada: card em P&B com a fita "Já divulgado". */
+  jaDivulgado?: boolean;
 };
 
 const emReais = (valor: number) =>
@@ -15,7 +17,7 @@ const emReais = (valor: number) =>
 const emMilhares = (valor: number) =>
   valor >= 1000 ? `${(valor / 1000).toFixed(1).replace(".0", "")} mil` : String(valor);
 
-export function CardProduto({ produto, onClick }: CardProdutoProps) {
+export function CardProduto({ produto, onClick, jaDivulgado }: CardProdutoProps) {
   const [imagemQuebrou, setImagemQuebrou] = useState(false);
 
   return (
@@ -24,6 +26,11 @@ export function CardProduto({ produto, onClick }: CardProdutoProps) {
       className="group flex flex-col overflow-hidden rounded-2xl bg-superficie text-left ring-1 ring-black/[0.06] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-16px_rgba(196,58,30,0.28)] hover:ring-marca-200"
     >
       <div className="relative aspect-square overflow-hidden bg-tela">
+        {jaDivulgado && (
+          <span className="pointer-events-none absolute -left-8 top-3.5 z-10 -rotate-45 bg-marca-600 px-9 py-1 text-center text-[10px] font-bold tracking-wide text-white uppercase shadow-sm">
+            Já divulgado
+          </span>
+        )}
         {imagemQuebrou ? (
           <div className="flex h-full w-full items-center justify-center text-3xl opacity-40">
             🛍️
@@ -42,7 +49,9 @@ export function CardProduto({ produto, onClick }: CardProdutoProps) {
              */
             crossOrigin="anonymous"
             onError={() => setImagemQuebrou(true)}
-            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+            className={`h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06] ${
+              jaDivulgado ? "opacity-60 grayscale" : ""
+            }`}
           />
         )}
 

@@ -12,10 +12,13 @@ import {
 import { useGeradorImagem } from "@/lib/imagem/useGerador";
 import { linkAfiliadoPessoal } from "./link-afiliado";
 import { legendaDoProduto } from "./legenda-acao";
+import { registrarDivulgacao } from "./divulgacao-acao";
 
 type ModalGeradorProps = {
   produto: Produto;
   onClose: () => void;
+  /** Chamado quando a afiliada compartilha e o produto entra nas divulgações. */
+  onDivulgou?: (itemId: string) => void;
 };
 
 /** Espaco que o preview pode ocupar. O template real e bem maior e e escalado. */
@@ -30,8 +33,9 @@ function pareceLinkShopee(valor: string): boolean {
   return /shopee\.com\.br|shp\.ee|s\.shopee|shope\.ee/i.test(valor.trim());
 }
 
-export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
+export function ModalGerador({ produto, onClose, onDivulgou }: ModalGeradorProps) {
   const [aba, setAba] = useState<"whatsapp" | "instagram">("whatsapp");
+  const [adicionarNaVitrine, setAdicionarNaVitrine] = useState(true);
 
   const [copy, setCopy] = useState("");
   const [gerador] = useState(() => criarGeradorDeCopy());
@@ -153,6 +157,28 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
   const linkValido = pareceLinkShopee(meuLink);
   const linkParaCopy = usarLinkDaCasa ? linkAtivo : meuLink.trim();
   const podeGerar = linkValido || usarLinkDaCasa;
+
+  // "Próprio" = qualquer link que não seja o offerLink da casa. Cobre tanto o
+  // link colado no passo 2 quanto o gerado pelas credenciais dela (linkAtivo).
+  const usouLinkProprio =
+    linkParaCopy !== "" && linkParaCopy !== produto.offerLink;
+  const avisaLinkGenerico = adicionarNaVitrine && !usouLinkProprio;
+
+  /** Registra a divulgação quando ela compartilha (bookkeeping, não bloqueia). */
+  function registrarSeMarcado() {
+    if (!adicionarNaVitrine) return;
+    registrarDivulgacao({
+      itemId: produto.itemId,
+      nome: produto.nome,
+      preco: produto.preco,
+      imagemUrl: produto.imagemUrl,
+      comissao: produto.comissao,
+      linkAfiliado: linkParaCopy || produto.offerLink,
+      usouLinkProprio,
+    }).then((r) => {
+      if (r.ok) onDivulgou?.(produto.itemId);
+    });
+  }
 
   function abrirProduto() {
     window.open(produto.offerLink, "_blank", "noopener,noreferrer");
@@ -323,6 +349,33 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
             </div>
           </div>
 
+          {/* Toggle da vitrine pública — vale pras duas abas. */}
+          <div className="border-b border-black/[0.06] py-4">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={adicionarNaVitrine}
+                onChange={(e) => setAdicionarNaVitrine(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-marca-600"
+              />
+              <span className="text-sm">
+                <span className="font-semibold text-tinta">
+                  Adicionar à minha vitrine
+                </span>
+                <span className="mt-0.5 block text-xs text-tinta-fraca">
+                  Salva a promoção pra suas clientes acharem depois no seu link.
+                </span>
+              </span>
+            </label>
+            {avisaLinkGenerico && (
+              <p className="mt-2.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-100">
+                Cole o <strong>seu</strong> link no passo 2 — senão a promoção
+                entra na vitrine mandando pro link genérico e você não ganha
+                comissão.
+              </p>
+            )}
+          </div>
+
           {/* Passo 3 — onde vai postar. */}
           <p className="flex items-center gap-2 pt-5 pb-3 text-sm font-semibold text-tinta">
             <PassoBadge>3</PassoBadge>
@@ -380,12 +433,16 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                       href={`https://wa.me/?text=${encodeURIComponent(copy)}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={registrarSeMarcado}
                       className="block w-full rounded-xl bg-[#25D366] px-4 py-3.5 text-center font-semibold text-white transition-opacity hover:opacity-90"
                     >
                       Enviar no WhatsApp
                     </a>
                     <button
-                      onClick={() => copiarTexto(copy, "copy")}
+                      onClick={() => {
+                        copiarTexto(copy, "copy");
+                        registrarSeMarcado();
+                      }}
                       className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
                         copiado === "copy"
                           ? "bg-emerald-600 text-white"
@@ -495,7 +552,10 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                     imagem já vem pronta, senão o celular recusa a folha de
                     compartilhamento e o app acabava baixando o arquivo. */}
                 <button
-                  onClick={() => compartilhar(legenda || undefined)}
+                  onClick={() => {
+                    compartilhar(legenda || undefined);
+                    registrarSeMarcado();
+                  }}
                   disabled={!pronta}
                   className="w-full rounded-xl bg-marca-700 px-4 py-3.5 font-semibold text-white transition-all hover:bg-marca-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-tinta-fraca"
                 >
@@ -506,7 +566,10 @@ export function ModalGerador({ produto, onClose }: ModalGeradorProps) {
                       : "Compartilhar imagem"}
                 </button>
                 <button
-                  onClick={() => baixar()}
+                  onClick={() => {
+                    baixar();
+                    registrarSeMarcado();
+                  }}
                   disabled={!pronta}
                   className="w-full rounded-xl bg-tela px-4 py-2.5 text-sm font-semibold text-tinta transition-colors hover:bg-black/5 disabled:opacity-60"
                 >

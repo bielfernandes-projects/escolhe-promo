@@ -18,10 +18,19 @@ type Filtro = Nicho | "todos";
 /** Quantos cards a Vitrine mostra de uma vez. O catalogo do dia e maior. */
 const LIMITE = 48;
 
-export function VitrineClient({ produtos }: { produtos: Produto[] }) {
+export function VitrineClient({
+  produtos,
+  itensDivulgados,
+}: {
+  produtos: Produto[];
+  itensDivulgados: string[];
+}) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [ordenacao, setOrdenacao] = useState<Ordenacao>(ORDENACAO_PADRAO);
   const [selecionado, setSelecionado] = useState<Produto | null>(null);
+  // Cresce quando ela compartilha um produto pelo modal, pra o card virar P&B
+  // na hora sem esperar um reload.
+  const [divulgados, setDivulgados] = useState(() => new Set(itensDivulgados));
   // "Gerar novos produtos" avanca uma pagina do catalogo do dia (que tem bem
   // mais produto do que cabe na tela); ao chegar no fim, volta pro comeco.
   const [pagina, setPagina] = useState(0);
@@ -134,6 +143,7 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
                 key={produto.itemId}
                 produto={produto}
                 onClick={setSelecionado}
+                jaDivulgado={divulgados.has(produto.itemId)}
               />
             ))}
           </div>
@@ -141,7 +151,13 @@ export function VitrineClient({ produtos }: { produtos: Produto[] }) {
       </div>
 
       {selecionado && (
-        <ModalGerador produto={selecionado} onClose={() => setSelecionado(null)} />
+        <ModalGerador
+          produto={selecionado}
+          onClose={() => setSelecionado(null)}
+          onDivulgou={(itemId) =>
+            setDivulgados((antes) => new Set(antes).add(itemId))
+          }
+        />
       )}
     </main>
   );

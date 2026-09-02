@@ -38,7 +38,10 @@ _Avoid_: template do Canva (o app não fala com a API do Canva — o Autofill de
 Ao abrir o modal de um Produto, o passo 1 é o botão "Abrir produto na Shopee", que leva pelo link de afiliado do dono do app — o usuário passa por esse link no caminho de pegar o próprio link de afiliado na Shopee. Se ele seguir sem colar um link próprio ("não tenho um link de afiliado"), a copy também sai com o link do dono. Nos dois casos o dono monetiza.
 
 **Lifetime Deal**:
-A oferta principal: acesso vitalício ao app por um pagamento único (R$ 47–67).
+A oferta paga: acesso vitalício ao app por um pagamento único (R$ 47). Desde 02/09/2026 vem depois do Teste Grátis — a pessoa testa 7 dias e só então paga pra continuar.
+
+**Teste Grátis**:
+7 dias de acesso total ao app, sem cartão, criados em `/cadastro` a partir da landing. Uma linha em `compras` com `cakto_order_id` nulo e `trial_expira_em = agora + 7 dias`; `tem_compra_ativa()` (RLS) e `checarAcesso` (`src/lib/auth/acesso.ts`) aceitam a linha enquanto `trial_expira_em > now()`. No 8º dia sem comprar, o layout de `/app` manda pra `/acesso-encerrado?de=teste` (paywall duro — não existe versão grátis permanente). Faixa de aviso (`aviso-teste.tsx`) aparece nos últimos 3 dias. Ao comprar, o webhook da Cakto insere a linha paga como segunda linha e a de teste fica inerte.
 
 **Order Bump**:
 Oferta complementar adicionada no checkout com um clique, sem interromper a compra — no MVP, o e-book "Turbinar".

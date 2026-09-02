@@ -66,6 +66,22 @@ export default async function ConfiguracoesPage() {
         perfil={perfilRes.data ?? null}
         divulgacoes={divulgacoesRes.data ?? []}
       />
+
+      <section className="mt-8 rounded-2xl bg-superficie p-5 ring-1 ring-black/[0.06]">
+        <h2 className="text-base font-bold text-tinta">
+          Tem uma crítica ou ideia?
+        </h2>
+        <p className="mt-1.5 text-sm text-tinta-fraca">
+          O Escolhe Promo é novo e cresce com a ajuda de quem usa. Se tem algo
+          que te incomoda ou que você queria ver por aqui, me conta.
+        </p>
+        <a
+          href="mailto:contato@escolhepromo.com.br?subject=Ideia%20ou%20cr%C3%ADtica%20sobre%20o%20Escolhe%20Promo"
+          className="mt-3 inline-flex text-sm font-semibold text-marca-700 underline underline-offset-2"
+        >
+          contato@escolhepromo.com.br
+        </a>
+      </section>
     </main>
   );
 }

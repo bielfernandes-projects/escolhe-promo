@@ -3,7 +3,7 @@
 export const metadata = {
   title: "Termos de Uso — Escolhe Promo",
   description:
-    "Termos de uso do Escolhe Promo: o que o acesso vitalício inclui, a garantia de 7 dias e as regras de uso.",
+    "Termos de uso do Escolhe Promo: o teste grátis de 7 dias, o acesso vitalício, a garantia e as regras de uso.",
   alternates: { canonical: "/termos" },
 };
 
@@ -18,7 +18,7 @@ export default function TermosPage() {
         ← Escolhe Promo
       </Link>
       <h1 className="mt-4 text-2xl font-bold tracking-tight">Termos de Uso</h1>
-      <p className="mt-1 text-sm text-tinta-fraca">Última atualização: 25/08/2026</p>
+      <p className="mt-1 text-sm text-tinta-fraca">Última atualização: 02/09/2026</p>
 
       <div className="prose prose-sm mt-6 max-w-none space-y-5 text-sm leading-relaxed text-tinta">
         <section>
@@ -45,22 +45,26 @@ export default function TermosPage() {
         </section>
 
         <section>
-          <h2 className="font-bold">3. Acesso e pagamento</h2>
+          <h2 className="font-bold">3. Teste grátis, acesso e pagamento</h2>
           <p>
-            O acesso é vitalício, mediante pagamento único processado pela
-            Cakto. Não há cobrança recorrente. O acesso é pessoal e
-            intransferível, vinculado ao e-mail usado na compra.
+            Você pode criar uma conta e usar o serviço gratuitamente por 7
+            dias, sem cartão. Encerrado esse período, o acesso é interrompido
+            até a contratação do acesso vitalício, mediante pagamento único
+            processado pela Cakto — não há cobrança recorrente nem cobrança
+            automática ao fim do teste. O acesso é pessoal e intransferível,
+            vinculado ao e-mail usado no cadastro e na compra, que devem ser o
+            mesmo.
           </p>
         </section>
 
         <section>
           <h2 className="font-bold">4. Direito de arrependimento</h2>
           <p>
-            Por se tratar de compra online, você tem direito de solicitar o
-            cancelamento e reembolso integral em até 7 dias corridos da
-            compra, conforme o art. 49 do Código de Defesa do Consumidor,
-            solicitando diretamente na plataforma de pagamento (Cakto) ou pelo
-            contato acima.
+            Além do teste grátis, por se tratar de compra online você tem
+            direito de solicitar o cancelamento e reembolso integral em até 7
+            dias corridos da compra, conforme o art. 49 do Código de Defesa do
+            Consumidor, solicitando diretamente na plataforma de pagamento
+            (Cakto) ou pelo contato acima.
           </p>
         </section>
 

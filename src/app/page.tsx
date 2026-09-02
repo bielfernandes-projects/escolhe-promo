@@ -9,6 +9,8 @@ const PRECO = "47";
 /** Mesmo valor no formato que o schema.org espera. */
 const PRECO_DECIMAL = "47.00";
 const CHECKOUT = process.env.NEXT_PUBLIC_CAKTO_CHECKOUT_URL ?? "#";
+/** Onde começa o teste grátis de 7 dias (cria conta, sem cartão). */
+const CADASTRO = "/cadastro";
 
 const PASSOS = [
   {
@@ -25,6 +27,24 @@ const PASSOS = [
     titulo: "Baixe a imagem",
     texto:
       "Escolha o modelo de Feed ou Story, baixe e poste. Sem Canva, sem editar nada.",
+  },
+];
+
+const TESTE_PASSOS = [
+  {
+    titulo: "Cria a conta",
+    texto:
+      "Só o e-mail, sem cartão e sem senha na hora. Você recebe um link e já entra.",
+  },
+  {
+    titulo: "Usa tudo por 7 dias",
+    texto:
+      "Vitrine, gerador de copy, imagens, sua página /@seunome — tudo liberado, sem versão capada.",
+  },
+  {
+    titulo: "Gostou? Paga uma vez",
+    texto:
+      "R$ 47 uma vez só, com o mesmo e-mail do teste, e o acesso é seu pra sempre. Não gostou, é só não continuar.",
   },
 ];
 
@@ -83,12 +103,16 @@ const FAQ = [
     a: "O Escolhe Promo tira de você o trabalho de escrever e montar imagem, que é onde a maioria desiste. Postar todo dia e responder quem chama no direct continua sendo com você.",
   },
   {
+    q: "Como funciona o teste grátis?",
+    a: "Você cria a conta com seu e-mail, sem cartão, e usa tudo por 7 dias. Passou o prazo, é só pagar os R$ 47 uma vez pra continuar — usando o mesmo e-mail do teste.",
+  },
+  {
     q: "É assinatura mensal?",
-    a: "Não. Você paga uma vez os R$ 47 e usa pra sempre, sem mensalidade e sem cobrança nova.",
+    a: "Não. Depois do teste você paga uma vez os R$ 47 e usa pra sempre, sem mensalidade e sem cobrança nova.",
   },
   {
     q: "E se eu não gostar?",
-    a: "Você tem 7 dias pra pedir o dinheiro de volta, sem precisar explicar o motivo.",
+    a: "Você testa 7 dias de graça antes de pagar qualquer coisa. E se comprar e mudar de ideia, ainda tem 7 dias pra pedir o dinheiro de volta, sem precisar explicar o motivo.",
   },
 ];
 
@@ -96,7 +120,7 @@ export const metadata: Metadata = {
   // O título da home não usa o template "%s · Escolhe Promo": ele já é a marca.
   title: "Escolhe Promo — copy e imagem prontas pra afiliada da Shopee",
   description:
-    "Não sabe o que postar pra vender como afiliada da Shopee? O Escolhe Promo abre uma vitrine de produtos todo dia e monta o texto e a imagem prontos pro WhatsApp e pro Instagram. R$ 47 uma vez só, sem mensalidade.",
+    "Não sabe o que postar pra vender como afiliada da Shopee? O Escolhe Promo abre uma vitrine de produtos todo dia e monta o texto e a imagem prontos pro WhatsApp e pro Instagram. 7 dias grátis, sem cartão — depois R$ 47 uma vez só, sem mensalidade.",
   alternates: { canonical: "/" },
   keywords: [
     "afiliado shopee",
@@ -138,7 +162,7 @@ export default function LandingPage() {
             <div className="text-center lg:text-left">
               <p className="inline-flex items-center gap-2 rounded-full bg-superficie px-3 py-1 text-xs font-semibold text-tinta-fraca ring-1 ring-black/[0.06]">
                 <span className="h-1.5 w-1.5 rounded-full bg-marca-500" />
-                Pra afiliado da Shopee
+                7 dias grátis · sem cartão
               </p>
               <h1 className="fonte-display mt-5 text-[clamp(2.9rem,7.5vw,5.25rem)] leading-[0.98] text-balance">
                 Copiou, postou,{" "}
@@ -150,12 +174,21 @@ export default function LandingPage() {
                 só posta.
               </p>
               <div className="mt-8 flex flex-col items-center gap-3 lg:items-start">
-                <a href={CHECKOUT} className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}>
-                  Quero acesso vitalício
-                </a>
+                <Link
+                  href={CADASTRO}
+                  className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}
+                >
+                  Testar 7 dias grátis
+                </Link>
                 <p className="text-sm text-tinta-fraca">
-                  R$ {PRECO} uma vez só · sem mensalidade · 7 dias de garantia
+                  Sem cartão · depois R$ {PRECO} uma vez só, sem mensalidade
                 </p>
+                <a
+                  href={CHECKOUT}
+                  className="text-sm font-semibold text-marca-700 underline underline-offset-4"
+                >
+                  Prefere já comprar o vitalício?
+                </a>
               </div>
             </div>
 
@@ -250,12 +283,59 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Como funciona o teste grátis */}
+        <section className="lp-reveal py-20 sm:py-28">
+          <div className="mx-auto w-full max-w-5xl px-5">
+            <h2 className="fonte-display text-3xl text-balance sm:text-4xl">
+              Grátis por 7 dias, de verdade
+            </h2>
+            <p className="mt-3 max-w-xl text-lg text-tinta-fraca text-pretty">
+              Sem cartão, sem pegadinha, sem versão de brinde. Você usa o app
+              inteiro e só decide depois.
+            </p>
+            <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-8">
+              {TESTE_PASSOS.map((passo, i) => (
+                <li key={passo.titulo} className="relative">
+                  <span className="fonte-display block text-5xl text-marca-300">
+                    {i + 1}
+                  </span>
+                  <h3 className="mt-3 text-lg font-bold">{passo.titulo}</h3>
+                  <p className="mt-2 text-sm text-tinta-fraca text-pretty">
+                    {passo.texto}
+                  </p>
+                  {i < TESTE_PASSOS.length - 1 && (
+                    <span
+                      aria-hidden
+                      className="mt-5 block h-px w-12 bg-marca-200 sm:absolute sm:top-6 sm:-right-4 sm:mt-0 sm:h-10 sm:w-px"
+                    />
+                  )}
+                </li>
+              ))}
+            </ol>
+            <div className="mt-12 flex flex-col items-center gap-3 sm:flex-row">
+              <Link href={CADASTRO} className={BOTAO_PRIMARIO}>
+                Testar 7 dias grátis
+              </Link>
+              <a
+                href={CHECKOUT}
+                className="text-sm font-semibold text-marca-700 underline underline-offset-4"
+              >
+                Prefere já comprar o vitalício?
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* O que entra */}
         <section className="lp-reveal py-20 sm:py-28">
           <div className="mx-auto w-full max-w-3xl px-5">
             <h2 className="fonte-display text-3xl text-balance sm:text-4xl">
               O que entra no acesso
             </h2>
+            <p className="mt-3 text-lg text-tinta-fraca text-pretty">
+              Tudo isto liberado já nos 7 dias grátis — e pra sempre depois que
+              você garante o vitalício.
+            </p>
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
               {INCLUI.map((item) => (
                 <li
@@ -367,12 +447,13 @@ export default function LandingPage() {
           <div className="mx-auto w-full max-w-2xl px-5">
             <div className="rounded-3xl bg-marca-50 p-8 text-center sm:p-12">
               <p className="text-xs font-bold tracking-[0.12em] text-marca-700 uppercase">
-                Garantia de 7 dias
+                Teste antes de pagar
               </p>
               <p className="mt-3 text-lg text-pretty">
-                Compre, use o Escolhe Promo por uma semana inteira. Se não fizer
-                sentido pra você, é só pedir o reembolso. Devolvemos os R${" "}
-                {PRECO} sem perguntar nada.
+                São 7 dias com tudo liberado, sem cartão. Se não fizer sentido
+                pra você, é só não continuar — você não pagou nada. Se comprar o
+                vitalício, ainda tem 7 dias de garantia pra pedir os R$ {PRECO}
+                {" "}de volta.
               </p>
             </div>
           </div>
@@ -398,18 +479,18 @@ export default function LandingPage() {
         <section className="bg-brasa py-24 text-white sm:py-32">
           <div className="mx-auto w-full max-w-xl px-5 text-center">
             <h2 className="fonte-display text-4xl text-balance sm:text-5xl">
-              Uma vez só. Pra sempre.
+              Testa hoje. Decide depois.
             </h2>
             <p className="mt-4 text-marca-100 text-pretty">
-              Sem assinatura, sem cobrança recorrente. Você paga R$ {PRECO}{" "}
-              hoje, tem 7 dias de garantia e usa o Escolhe Promo o quanto quiser.
+              7 dias grátis, sem cartão. Gostou, paga R$ {PRECO} uma vez só e usa
+              pra sempre — sem assinatura, sem cobrança recorrente.
             </p>
-            <a
-              href={CHECKOUT}
+            <Link
+              href={CADASTRO}
               className="mt-8 inline-flex w-full items-center justify-center rounded-2xl bg-white px-8 py-4 text-lg font-bold text-marca-700 shadow-[0_12px_30px_-10px_rgba(0,0,0,0.5)] transition-all duration-200 hover:bg-marca-50 active:scale-[0.98] sm:w-auto"
             >
-              Garantir meu acesso
-            </a>
+              Começar meu teste grátis
+            </Link>
           </div>
         </section>
       </main>
@@ -419,7 +500,7 @@ export default function LandingPage() {
           <MarcaSimbolo size={16} /> Escolhe Promo
         </p>
         <p>
-          Já comprou?{" "}
+          Já tem conta?{" "}
           <Link
             href="/login"
             className="font-semibold text-marca-700 underline underline-offset-4"
@@ -448,17 +529,17 @@ export default function LandingPage() {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/[0.08] bg-superficie/95 px-4 py-3 backdrop-blur sm:hidden">
         <div className="flex items-center justify-between gap-3">
           <div className="leading-tight">
-            <p className="fonte-display text-lg">R$ {PRECO}</p>
+            <p className="fonte-display text-lg">7 dias grátis</p>
             <p className="text-[11px] text-tinta-fraca">
-              uma vez · 7 dias de garantia
+              sem cartão · depois R$ {PRECO} uma vez
             </p>
           </div>
-          <a
-            href={CHECKOUT}
+          <Link
+            href={CADASTRO}
             className="rounded-xl bg-marca-700 px-5 py-3 text-sm font-bold text-white active:scale-[0.98]"
           >
-            Quero acesso
-          </a>
+            Testar grátis
+          </Link>
         </div>
       </div>
     </div>

@@ -43,6 +43,10 @@ export function FormularioLogin({ erroInicial }: { erroInicial?: string }) {
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/confirm?next=/app/vitrine`,
+        // Login não cria conta: quem não tem cadastro vai pelo /cadastro (teste
+        // grátis) ou pelo checkout. Sem isto, um e-mail desconhecido criaria um
+        // user sem linha em `compras` — logado e sem acesso a nada.
+        shouldCreateUser: false,
       },
     });
     if (error) {

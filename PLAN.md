@@ -34,13 +34,14 @@ Micro SaaS B2C que resolve a dor operacional de afiliados iniciantes da Shopee (
 3. **Gerador de Imagens (HTML-to-Image)** — 3 a 5 Templates Visuais (Feed/Story) em HTML/CSS, populados com foto (pré-baixada e re-hospedada no Supabase Storage, sem problema de CORS) e preço do produto, renderizados no client, download direto.
 4. **Double-Dip** — cliques na Vitrine sem link próprio do usuário caem no link de afiliado do dono do app.
 
-## Arquitetura Pós-Pagamento (Cakto → acesso liberado)
+## Arquitetura de Acesso (Teste Grátis → Cakto → acesso liberado)
 
-1. Cakto dispara webhook (`/api/webhooks/cakto`) na confirmação de pagamento, com o(s) item(ns) comprados (Lifetime Deal e, opcionalmente, o Order Bump do e-book) e o e-mail do comprador.
-2. A rota do webhook valida a assinatura/segredo da Cakto e usa a Supabase Admin API para: (a) criar ou localizar o usuário pelo e-mail, (b) gravar um registro na tabela `compras` com os itens liberados (`lifetime: true`, `ebook_turbinar: true/false`), (c) disparar o magic link de acesso (`signInWithOtp`).
-3. O layout de `/app/**` (ver `src/app/app/layout.tsx`) protege as rotas checando a sessão Supabase; a seção do e-book só renderiza se `compras.ebook_turbinar = true` pro usuário logado.
-4. Não existe cadastro/self-signup — a única porta de entrada é o webhook pós-pagamento.
-5. A landing page de vendas mora na rota pública `/`; o botão de compra leva ao checkout hospedado da Cakto.
+1. **Teste grátis** (desde 02/09/2026): a landing (`/`) leva a `/cadastro`, onde a server action `criarContaTeste` (`src/app/cadastro/acoes.ts`) espelha o webhook — cria o usuário via Supabase Admin API, grava uma linha em `compras` com `lifetime: false`, `cakto_order_id: null` e `trial_expira_em = agora + 7 dias`, e dispara o magic link. Não reinicia o teste pra e-mail que já tem conta.
+2. **Compra** (Cakto): o webhook (`/api/webhooks/cakto`) valida o segredo e usa a Admin API para (a) criar ou localizar o usuário pelo e-mail, (b) gravar uma linha em `compras` com `lifetime: true` e o `cakto_order_id`, (c) disparar o magic link. Se o usuário veio de um teste, a linha paga é uma segunda linha e a de teste fica inerte.
+3. O layout de `/app/**` (`src/app/app/layout.tsx`) checa a sessão Supabase e chama `checarAcesso` (`src/lib/auth/acesso.ts`): tem acesso quem tem linha em `compras` não-reembolsada **com** `cakto_order_id` **ou** com `trial_expira_em` no futuro. Sem acesso: reembolso → `/acesso-encerrado`; teste expirado → `/acesso-encerrado?de=teste` (paywall com botão pro checkout). Faixa de aviso nos últimos 3 dias do teste (`aviso-teste.tsx`). A regra real mora na RLS (`tem_compra_ativa()`, migration `0008`).
+4. A cobrança segue sendo **pagamento único** — o teste não é assinatura. Não há tier grátis permanente: no 8º dia o app trava até pagar.
+5. Primeiro login (teste ou compra) força criar uma senha (`ModalCriarSenha`). O "Allow new users to sign up" do painel Supabase segue **desligado** — `/cadastro` usa a Admin API.
+6. A seção do e-book só renderiza se `compras.ebook_turbinar = true` pro usuário logado.
 
 ## Riscos Técnicos Conhecidos
 
@@ -98,6 +99,44 @@ Ainda pendente da Fase 5 (marketing, não é código): variações de anúncio e
 - **Ponto 8 — enviar a própria foto**: mantido do que já estava; `renderTemplate` aceita 3º arg opcional de imagem, 100% client-side.
 - **Ajustes de mobile**: (a) no cabeçalho do app o wordmark de texto some no celular (só o símbolo) porque brigava com a aba "Vitrine"; "Configurações" virou aba de nav ao lado de "Vitrine", com o mesmo estado ativo (fundo laranja) que faltava. (b) `layout.tsx` trava o zoom (`maximumScale/minimumScale: 1`, `userScalable: false`) a pedido do dono. (c) `modal-gerador.tsx`: trava a rolagem do `body` enquanto aberto (a página atrás rolava junto e o "puxar pra atualizar" recarregava tudo), `overscroll-contain` no corpo rolável, e a alcinha de bottom-sheet agora **arrasta pra baixo pra fechar** de verdade (handlers de touch; só inicia se a rolagem interna está no topo).
 - **Logo (Fase 4, ✅)**: o dono desenhou a marca no Canva — um balão de conversa em forma de etiqueta de preço formando um "E", com um raio amarelo; **sem o nome escrito**. Arte (2000²); a página serve o `icon.png` (512²). Os ícones do site passaram a ser PNG estáticos pelas convenções do Next: `src/app/icon.png`, `src/app/apple-icon.png`, `src/app/favicon.ico` (os antigos `icon.tsx`/`apple-icon.tsx` que geravam um "EP" via `next/og` foram removidos). `src/app/manifest.ts` aponta pra `/icon.png` e `/apple-icon.png`. Todo lugar que mostrava o wordmark ("Eita**Promo**" em texto) agora usa `src/app/_brand/marca.tsx` — `MarcaSimbolo` (a arte), `Wordmark` (o texto) e `Marca` (o lockup símbolo+texto), aplicado no cabeçalho do app, no da landing, no rodapé e no login. O nome em texto foi **mantido ao lado do símbolo** nos cabeçalhos porque o produto é novo e ainda não tem reconhecimento de marca. Novo: `src/app/opengraph-image.tsx` (cartão 1200×630 pro preview de link/anúncio) e `metadataBase` + `openGraph` no `layout.tsx`.
+
+## Sessão 02/09/2026 — Teste grátis de 7 dias (freemium)
+
+Modelo de venda mudou (decidido num /grill, ninguém tinha comprado ainda): antes
+era só pagamento único; agora a pessoa cria conta em `/cadastro` (só e-mail, sem
+cartão), usa **tudo** por 7 dias — incluindo o handle `/@nome` e a API própria da
+Shopee, sem versão capada — e no 8º dia o app trava até pagar os R$ 47 (mesmo
+e-mail). Sem tier grátis permanente: o dono recusou o "grátis = 10 produtos"
+porque exigia um contador de uso do zero, custava com quem nunca paga e tirava a
+urgência de comprar. Motivação: o teste valida o produto (a pessoa decide que
+quer, em vez de comprar, usar 2 dias e pedir reembolso) e semeia prova social.
+
+Construído e testado end-to-end no browser (cadastro, e-mail duplicado, magic
+link, RLS aceitando o teste, modal de senha, faixa de aviso, lockout no dia 8,
+conversão restaurando acesso; 50 testes + `next build` verdes):
+
+- **Migration `0008_teste_gratis.sql`**: coluna `compras.trial_expira_em`;
+  `tem_compra_ativa()` e `vitrine_publica()` passam a aceitar linha não-reembolsada
+  **com** `cakto_order_id` **ou** com teste no futuro. Linhas pagas e `manual-*`
+  seguem valendo. Rodada à mão no SQL editor do Supabase.
+- **`/cadastro`** (page + form + `acoes.ts`): server action espelha o webhook
+  (Admin API → linha de teste → magic link), rate-limit por IP, recusa e-mail que
+  já tem conta.
+- **`src/lib/auth/acesso.ts`**: `temAcessoAtivo` (bool) virou `checarAcesso`
+  (`{ativo, trial, trialExpiraEm}` ou `{ativo:false, motivo}`); fail-open mantido.
+- **`aviso-teste.tsx`**: faixa no topo do `/app` nos últimos 3 dias.
+- **`/acesso-encerrado?de=teste`**: variante "seu teste acabou" + botão pro
+  checkout. Sem o param, texto de reembolso intacto.
+- **Login "Link"**: `shouldCreateUser: false` defensivo.
+- **`/app/configuracoes`**: seção "Tem uma crítica ou ideia?" com mailto.
+- **Landing (`src/app/page.tsx`)**: selo "7 dias grátis · sem cartão", CTAs →
+  `/cadastro` (secundário → checkout), nova seção "Grátis por 7 dias, de verdade",
+  FAQ e garantia reescritas, fechamento "Testa hoje. Decide depois.".
+
+**Pendente:** conferir no Supabase (Authentication → URL Configuration) que
+`https://www.escolhepromo.com.br/**` está nas Redirect URLs e o Site URL não tem
+barra sobrando, e rodar um cadastro real no domínio de produção depois do deploy.
+Ainda falta o material de anúncio falando do teste grátis (Fase 5, marketing).
 
 ## Roadmap combinado com o dono do produto (ordem de execução)
 

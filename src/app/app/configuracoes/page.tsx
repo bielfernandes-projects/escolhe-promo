@@ -1,7 +1,6 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { FormularioSenha } from "./formulario-senha";
-import { FormularioShopee } from "./formulario-shopee";
+import { ConfiguracoesClient } from "./configuracoes-client";
 
 export const metadata = { title: "Configurações — Escolhe Promo" };
 
@@ -11,11 +10,26 @@ export default async function ConfiguracoesPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: credencial } = await supabase
-    .from("credenciais_afiliado")
-    .select("shopee_app_id")
-    .eq("user_id", user!.id)
-    .maybeSingle();
+  const [credencialRes, perfilRes, divulgacoesRes] = await Promise.all([
+    supabase
+      .from("credenciais_afiliado")
+      .select("shopee_app_id")
+      .eq("user_id", user!.id)
+      .maybeSingle(),
+    supabase
+      .from("perfis")
+      .select("handle, nome_exibicao")
+      .eq("user_id", user!.id)
+      .maybeSingle(),
+    supabase
+      .from("divulgacoes")
+      .select(
+        "id, item_id, nome, preco, imagem_url, link_afiliado, usou_link_proprio, na_vitrine, ordem",
+      )
+      .eq("user_id", user!.id)
+      .order("ordem", { ascending: true })
+      .order("criado_em", { ascending: false }),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-5 py-8">
@@ -43,10 +57,12 @@ export default async function ConfiguracoesPage() {
       </h1>
       <p className="mt-1 text-sm text-tinta-fraca">{user!.email}</p>
 
-      <div className="mt-7 space-y-5">
-        <FormularioSenha />
-        <FormularioShopee appIdSalvo={credencial?.shopee_app_id ?? null} />
-      </div>
+      <ConfiguracoesClient
+        email={user!.email ?? ""}
+        appIdShopee={credencialRes.data?.shopee_app_id ?? null}
+        perfil={perfilRes.data ?? null}
+        divulgacoes={divulgacoesRes.data ?? []}
+      />
     </main>
   );
 }

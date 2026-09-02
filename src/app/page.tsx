@@ -50,7 +50,15 @@ const INCLUI = [
   "Gerador de copy que não repete o mesmo texto",
   "3 modelos de imagem prontos pra Feed e Story",
   "Opção de usar sua própria foto na imagem",
+  "Sua vitrine pública num link só, pra colar na bio",
   "Funciona no celular e instala na tela inicial",
+];
+
+const VITRINE_MOCK = [
+  { emoji: "🧴", nome: "Kit skincare com 5 itens", preco: "R$ 29,90" },
+  { emoji: "🍳", nome: "Frigideira antiaderente 24cm", preco: "R$ 47,00" },
+  { emoji: "🧦", nome: "Meião de compressão (par)", preco: "R$ 19,90" },
+  { emoji: "🔌", nome: "Organizador de cabos 6 peças", preco: "R$ 12,50" },
 ];
 
 const FAQ = [
@@ -238,6 +246,76 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
+          </div>
+        </section>
+
+        {/* Vitrine pública da afiliada */}
+        <section className="lp-reveal py-20 sm:py-28">
+          <div className="mx-auto grid w-full max-w-5xl items-center gap-12 px-5 lg:grid-cols-2 lg:gap-16">
+            <div>
+              <h2 className="fonte-display text-3xl text-balance sm:text-4xl">
+                Sua vitrine num link só
+              </h2>
+              <p className="mt-4 text-lg text-tinta-fraca text-pretty">
+                Toda promoção que você compartilha fica guardada numa página só
+                sua — <span className="font-semibold text-tinta">escolhepromo.com.br/@seunome</span>.
+                Cola na bio do Instagram e suas clientes acham tudo que você já
+                divulgou, com o seu link de afiliada.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  "Cliente entra pela bio e compra pelo seu link",
+                  "Você reordena, esconde ou tira o que quiser",
+                  "Tem busca: a cliente acha o produto na hora",
+                ].map((item) => (
+                  <li key={item} className="flex gap-3 text-pretty">
+                    <IconeCheck className="mt-1.5 h-4 w-4 shrink-0 text-marca-600" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mx-auto w-full max-w-[300px]">
+              <div className="overflow-hidden rounded-[2rem] bg-tela p-3 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.25)] ring-1 ring-black/[0.06]">
+                <div className="rounded-[1.4rem] bg-superficie">
+                  <div className="border-b border-black/[0.06] px-4 py-4 text-center">
+                    <p className="fonte-display text-lg text-tinta">Ana Promos</p>
+                    <p className="text-[11px] text-tinta-fraca">@anapromos</p>
+                  </div>
+                  <div className="p-3">
+                    <div className="mb-2.5 flex items-center gap-2 rounded-lg bg-tela px-2.5 py-1.5 text-[11px] text-tinta-fraca">
+                      <span>🔍</span> Buscar produto
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {VITRINE_MOCK.map((p) => (
+                        <div
+                          key={p.nome}
+                          className="overflow-hidden rounded-xl ring-1 ring-black/[0.06]"
+                        >
+                          <div className="flex aspect-square items-center justify-center bg-tela text-3xl">
+                            {p.emoji}
+                          </div>
+                          <div className="p-1.5">
+                            <p className="line-clamp-2 text-[9px] leading-tight text-tinta">
+                              {p.nome}
+                            </p>
+                            <div className="mt-1 flex items-center justify-between">
+                              <span className="fonte-display text-[11px] text-tinta">
+                                {p.preco}
+                              </span>
+                              <span className="rounded bg-marca-600 px-1.5 py-0.5 text-[8px] font-bold text-white">
+                                Ver
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

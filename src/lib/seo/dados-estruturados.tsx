@@ -50,30 +50,27 @@ export function produto(preco: string, faq: { q: string; a: string }[]) {
         publisher: { "@id": `${SITE_URL}/#organizacao` },
       },
       {
-        "@type": "Product",
+        // SoftwareApplication, não Product: o Escolhe Promo é uma ferramenta web,
+        // não um item físico. O Rich Results Test cobra review/aggregateRating/
+        // shippingDetails de todo Product e enche a landing de warnings —
+        // SoftwareApplication com offer é o tipo certo e o preço aparece igual.
+        "@type": "SoftwareApplication",
         "@id": `${SITE_URL}/#produto`,
         name: "Escolhe Promo",
         description:
           "Ferramenta que gera texto e imagem prontos pra afiliada da Shopee divulgar no WhatsApp e no Instagram, com vitrine de produtos atualizada todo dia.",
-        brand: { "@id": `${SITE_URL}/#organizacao` },
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web, iOS, Android",
+        inLanguage: "pt-BR",
         image: `${SITE_URL}/opengraph-image`,
+        publisher: { "@id": `${SITE_URL}/#organizacao` },
         offers: {
           "@type": "Offer",
           url: SITE_URL,
           price: preco,
           priceCurrency: "BRL",
           availability: "https://schema.org/InStock",
-          // Pagamento único: sem data de validade da oferta.
-          category: "Acesso vitalício",
-          hasMerchantReturnPolicy: {
-            "@type": "MerchantReturnPolicy",
-            applicableCountry: "BR",
-            returnPolicyCategory:
-              "https://schema.org/MerchantReturnFiniteReturnWindow",
-            merchantReturnDays: 7,
-            returnMethod: "https://schema.org/ReturnByMail",
-            returnFees: "https://schema.org/FreeReturn",
-          },
+          // Pagamento único: acesso vitalício, sem validade da oferta.
         },
       },
       {

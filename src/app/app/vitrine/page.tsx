@@ -13,7 +13,10 @@ export const metadata = { title: "Vitrine do dia — Escolhe Promo" };
  */
 export default async function VitrinePage() {
   const [produtos, itensDivulgados, temApiShopee] = await Promise.all([
-    listarProdutos(800),
+    // 400 produtos = 8 paginas de "Gerar novos produtos". O numero e o teto do
+    // que viaja pro browser no payload do React Server Component, entao dobrar
+    // aqui dobra o que o celular baixa em toda entrada na Vitrine.
+    listarProdutos(400),
     listarItensDivulgados(),
     temCredencialShopee(),
   ]);

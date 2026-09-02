@@ -1,18 +1,22 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Regra de acesso ao /app:
- *   - nunca comprou  → libera (conta de teste/admin; não há self-signup)
- *   - tem ao menos uma compra sem reembolso → libera
- *   - todas as compras reembolsadas/contestadas → barra
+ * Regra de acesso ao /app: tem acesso quem tem ao menos uma compra sem
+ * reembolso. Sem compra nenhuma, não entra.
  *
- * Chamado no layout de /app com o client do próprio usuário — a RLS de
- * `compras` já limita a select às linhas dele. Um reembolso marca
- * `reembolsada_em` via webhook da Cakto e a próxima navegação cai fora.
+ * Antes isto liberava quem nunca comprou, pra facilitar contas de teste. Não dá
+ * pra manter: a anon key do Supabase é pública (vai no bundle do browser) e,
+ * com o auto-cadastro ligado, qualquer pessoa criaria a própria conta e entraria
+ * de graça no produto pago. Pra liberar uma conta de teste, insira a linha em
+ * `compras` — a migration 0007 traz o SQL pronto.
  *
- * ponytail: fail-open. Se a query der erro (banco fora do ar), deixa entrar —
- * trancar quem pagou por um soluço de rede é pior do que um reembolsado
- * passar durante uma indisponibilidade.
+ * Esta é a checagem de UX (redireciona pra uma página explicando). A checagem
+ * que vale de verdade é a RLS do Postgres, que barra a leitura do catálogo
+ * mesmo se alguém chamar a API do Supabase direto, sem passar por aqui.
+ *
+ * ponytail: fail-open em erro de rede. Se a query falhar, deixa passar — a RLS
+ * ainda barra os dados, então o pior caso é uma Vitrine vazia, e trancar quem
+ * pagou por causa de um soluço de rede seria pior.
  */
 export async function temAcessoAtivo(
   supabase: SupabaseClient,
@@ -32,7 +36,5 @@ export async function temAcessoAtivo(
     return true;
   }
 
-  if (!data || data.length === 0) return true;
-
-  return data.some((compra) => compra.reembolsada_em === null);
+  return (data ?? []).some((compra) => compra.reembolsada_em === null);
 }

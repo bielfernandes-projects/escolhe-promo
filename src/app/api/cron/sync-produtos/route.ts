@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { sincronizarCatalogo } from "@/lib/produtos/sincronizar";
 
@@ -14,6 +15,14 @@ export const maxDuration = 300;
  * Authorization com o CRON_SECRET) e tambem pode ser disparado a mao via curl
  * pra popular a tabela na primeira vez.
  */
+function segredoConfere(recebido: string | null, esperado: string): boolean {
+  if (!recebido) return false;
+  const a = Buffer.from(recebido);
+  const b = Buffer.from(esperado);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
 export async function GET(request: NextRequest) {
   const segredo = process.env.CRON_SECRET;
 
@@ -24,7 +33,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (request.headers.get("authorization") !== `Bearer ${segredo}`) {
+  // Comparacao em tempo constante: != vazaria o segredo por timing.
+  if (!segredoConfere(request.headers.get("authorization"), `Bearer ${segredo}`)) {
     return NextResponse.json({ erro: "nao autorizado" }, { status: 401 });
   }
 

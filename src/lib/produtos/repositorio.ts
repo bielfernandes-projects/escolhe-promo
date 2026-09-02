@@ -65,14 +65,26 @@ const paraLinha = (produto: Produto, quando: string): LinhaProduto => ({
 });
 
 /**
- * Le a Vitrine para o usuario logado. Passa pelo RLS: a policy
- * "Vitrine visivel para autenticados" so libera quem tem sessao.
+ * Colunas que a Vitrine usa, explicitas de proposito.
+ *
+ * Com `select("*")` vinham junto `legenda` (o texto de IA, ate ~800
+ * caracteres por linha, que so o modal pede sob demanda), `imagem_origem_url`
+ * (copia identica de `imagem_url`) e `atualizado_em`. Como cada carregamento
+ * da pagina le 1.5x o limite, isso eram centenas de KB por acesso que ninguem
+ * chegava a usar — e o publico do app esta no celular, em rede movel.
+ */
+const COLUNAS_VITRINE =
+  "item_id, nome, imagem_url, preco, taxa_comissao, comissao, vendas, avaliacao, taxa_desconto, nicho, offer_link, produto_link";
+
+/**
+ * Le a Vitrine para o usuario logado. Passa pelo RLS: so enxerga quem tem uma
+ * compra sem reembolso (ver migration 0007).
  */
 export async function listarProdutos(limite = 700): Promise<Produto[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("produtos")
-    .select("*")
+    .select(COLUNAS_VITRINE)
     // Puxa uma folga alem do limite: a deduplicacao corta linhas e sem folga o
     // resultado final ficaria abaixo do pedido.
     .order("comissao", { ascending: false })
@@ -82,7 +94,9 @@ export async function listarProdutos(limite = 700): Promise<Produto[]> {
     throw new Error(`Nao deu pra ler a Vitrine: ${error.message}`);
   }
 
-  return deduplicarProdutos((data as LinhaProduto[]).map(deLinha)).slice(0, limite);
+  return deduplicarProdutos(
+    (data as unknown as LinhaProduto[]).map(deLinha),
+  ).slice(0, limite);
 }
 
 /**

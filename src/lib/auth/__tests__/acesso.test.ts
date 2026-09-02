@@ -15,8 +15,8 @@ function fakeSupabase(resultado: {
 }
 
 describe("temAcessoAtivo", () => {
-  it("libera quem nunca comprou (conta de teste/admin)", async () => {
-    expect(await temAcessoAtivo(fakeSupabase({ data: [] }), "u1")).toBe(true);
+  it("barra quem nunca comprou (auto-cadastro nao da acesso ao produto pago)", async () => {
+    expect(await temAcessoAtivo(fakeSupabase({ data: [] }), "u1")).toBe(false);
   });
 
   it("libera com uma compra ativa", async () => {

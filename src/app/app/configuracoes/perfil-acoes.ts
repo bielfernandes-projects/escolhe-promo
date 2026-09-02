@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { normalizarHandle, validarHandle } from "@/lib/perfil/handle";
+import { linkShopeeValido } from "@/lib/seguranca/urls";
 
 type Resultado = { ok: boolean; erro?: string };
 
@@ -57,6 +58,10 @@ export async function salvarPerfil(
 export async function reordenarVitrine(ids: string[]): Promise<Resultado> {
   const { supabase, user } = await usuario();
   if (!user) return { ok: false, erro: "Sessão expirada." };
+
+  if (!Array.isArray(ids) || ids.length > 500) {
+    return { ok: false, erro: "Lista invalida." };
+  }
 
   // Um update por linha; a lista da afiliada é pequena (dezenas, não milhares).
   const updates = ids.map((id, ordem) =>

@@ -13,6 +13,7 @@ import { useGeradorImagem } from "@/lib/imagem/useGerador";
 import { linkAfiliadoPessoal } from "./link-afiliado";
 import { legendaDoProduto } from "./legenda-acao";
 import { registrarDivulgacao } from "./divulgacao-acao";
+import { linkShopeeValido } from "@/lib/seguranca/urls";
 
 type ModalGeradorProps = {
   produto: Produto;
@@ -30,10 +31,6 @@ const PREVIEW_ALTURA_MAX = 320;
 const emReais = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/** Aceita link cru da Shopee ou os encurtadores (shp.ee, s.shopee, shope.ee). */
-function pareceLinkShopee(valor: string): boolean {
-  return /shopee\.com\.br|shp\.ee|s\.shopee|shope\.ee/i.test(valor.trim());
-}
 
 export function ModalGerador({
   produto,
@@ -161,7 +158,7 @@ export function ModalGerador({
     };
   }, []);
 
-  const linkValido = pareceLinkShopee(meuLink);
+  const linkValido = linkShopeeValido(meuLink);
   // Link colado no passo 2 tem prioridade; senão usa o `linkAtivo` (o link
   // gerado pela API dela quando configurada, ou o link da casa).
   const linkParaCopy =
@@ -182,10 +179,6 @@ export function ModalGerador({
     if (!adicionarNaVitrine) return;
     registrarDivulgacao({
       itemId: produto.itemId,
-      nome: produto.nome,
-      preco: produto.preco,
-      imagemUrl: produto.imagemUrl,
-      comissao: produto.comissao,
       linkAfiliado: linkParaCopy || produto.offerLink,
       usouLinkProprio,
     }).then((r) => {
@@ -219,7 +212,7 @@ export function ModalGerador({
   function gerarLegendaClick() {
     setErroLegenda(null);
     iniciarLegenda(async () => {
-      const r = await legendaDoProduto(produto);
+      const r = await legendaDoProduto(produto.itemId);
       if (r.ok) setLegenda(r.legenda);
       else setErroLegenda(r.erro);
     });

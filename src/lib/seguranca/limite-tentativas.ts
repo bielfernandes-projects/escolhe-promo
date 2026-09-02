@@ -12,6 +12,24 @@ import "server-only";
  */
 const tentativas = new Map<string, { contagem: number; expiraEm: number }>();
 
+/**
+ * Teto de chaves distintas guardadas.
+ *
+ * Sem isto o Map so crescia: cada e-mail novo numa tentativa de login criava
+ * uma entrada que nunca era removida, entao bastava um script mandando e-mails
+ * aleatorios pra estourar a memoria da instancia e derrubar o app. Agora as
+ * entradas vencidas sao varridas, e se ainda assim passar do teto, o Map inteiro
+ * e zerado (perder a contagem por um instante e melhor que ficar sem memoria).
+ */
+const MAX_CHAVES = 10_000;
+
+function limpar(agora: number) {
+  for (const [chave, registro] of tentativas) {
+    if (registro.expiraEm < agora) tentativas.delete(chave);
+  }
+  if (tentativas.size > MAX_CHAVES) tentativas.clear();
+}
+
 export function excedeuLimite(
   chave: string,
   maximo = 5,
@@ -21,6 +39,8 @@ export function excedeuLimite(
   const registro = tentativas.get(chave);
 
   if (!registro || registro.expiraEm < agora) {
+    // Varre so quando o Map ja tem tamanho pra justificar o custo.
+    if (tentativas.size > 500) limpar(agora);
     tentativas.set(chave, { contagem: 1, expiraEm: agora + janelaMs });
     return false;
   }

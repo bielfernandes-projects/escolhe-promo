@@ -16,6 +16,14 @@ export async function entrarComSenha(
   email: string,
   senha: string,
 ): Promise<{ ok: boolean; erro?: string }> {
+  // Entrada de fora: sem teto, um corpo gigante vira custo de CPU de graca.
+  if (typeof email !== "string" || typeof senha !== "string") {
+    return { ok: false, erro: "Preencha e-mail e senha." };
+  }
+  if (email.length > 320 || senha.length > 200) {
+    return { ok: false, erro: "E-mail ou senha incorretos." };
+  }
+
   if (excedeuLimite(`login:${email.toLowerCase()}`)) {
     return {
       ok: false,
@@ -27,12 +35,11 @@ export async function entrarComSenha(
   const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
   if (error) {
-    return {
-      ok: false,
-      erro: error.message.includes("Invalid login credentials")
-        ? "E-mail ou senha incorretos."
-        : error.message,
-    };
+    // Mensagem generica de proposito: distinguir "senha errada" de "conta nao
+    // existe" entrega uma lista de e-mails cadastrados a quem testar em massa.
+    // O detalhe fica no log do servidor.
+    console.warn("[login] falhou:", error.message);
+    return { ok: false, erro: "E-mail ou senha incorretos." };
   }
   return { ok: true };
 }

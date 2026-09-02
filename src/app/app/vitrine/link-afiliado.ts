@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { queryShopee } from "@/lib/shopee/client";
 import { descriptografar } from "@/lib/seguranca/criptografia";
+import { linkShopeeValido } from "@/lib/seguranca/urls";
 
 /** A afiliada já salvou App ID + App Secret da Shopee em Configurações. */
 export async function temCredencialShopee(): Promise<boolean> {

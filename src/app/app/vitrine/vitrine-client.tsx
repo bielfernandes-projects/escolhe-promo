@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import type { Produto } from "@/lib/produtos/tipos";
 import { NICHOS, type Nicho } from "@/lib/shopee/niches";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/lib/produtos/ordenacao";
 import { CardProduto } from "./card-produto";
 import { ModalGerador } from "./modal-gerador";
+import { buscarProdutosShopee } from "./busca-acao";
 
 type Filtro = Nicho | "todos";
 
@@ -45,6 +46,16 @@ export function VitrineClient({
   // "Gerar novos produtos" avanca uma pagina do catalogo do dia (que tem bem
   // mais produto do que cabe na tela); ao chegar no fim, volta pro comeco.
   const [pagina, setPagina] = useState(0);
+  // Resultado da busca ao vivo na Shopee (efêmero — não vem do catálogo do dia).
+  const [resShopee, setResShopee] = useState<Produto[]>([]);
+  const [erroShopee, setErroShopee] = useState<string | null>(null);
+  const [buscouTermo, setBuscouTermo] = useState("");
+  const [buscando, iniciarBusca] = useTransition();
+
+  const itemIdsShopee = useMemo(
+    () => new Set(resShopee.map((p) => p.itemId)),
+    [resShopee],
+  );
 
   // So mostra chip de nicho que tem produto — filtro vazio frustra o usuario.
   const nichosComProduto = useMemo(() => {
@@ -86,6 +97,28 @@ export function VitrineClient({
   function trocarBusca(v: string) {
     setBusca(v);
     setPagina(0);
+    // Trocou o termo: o resultado da Shopee anterior não vale mais.
+    setResShopee([]);
+    setErroShopee(null);
+    setBuscouTermo("");
+  }
+
+  function buscarNaShopee() {
+    const termo = busca.trim();
+    if (termo.length < 2 || buscando) return;
+    setErroShopee(null);
+    iniciarBusca(async () => {
+      const r = await buscarProdutosShopee(termo);
+      setBuscouTermo(termo);
+      if (r.ok) {
+        // Tira o que já está no catálogo do dia — evita card duplicado.
+        const noDia = new Set(produtos.map((p) => p.itemId));
+        setResShopee(r.produtos.filter((p) => !noDia.has(p.itemId)));
+      } else {
+        setResShopee([]);
+        setErroShopee(r.erro);
+      }
+    });
   }
 
   return (
@@ -185,6 +218,67 @@ export function VitrineClient({
             ))}
           </div>
         )}
+
+        {/* Busca ao vivo na Shopee: só aparece com termo digitado. Traz produtos
+            que não estão no catálogo do dia. */}
+        {busca.trim().length >= 2 && (
+          <div className="mt-8 border-t border-black/[0.06] pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="fonte-display text-lg text-tinta">
+                  Buscar na Shopee inteira
+                </h2>
+                <p className="mt-0.5 text-sm text-tinta-fraca">
+                  {visiveis.length > 0
+                    ? "Não achou o que queria acima? Procure direto na Shopee."
+                    : "Procure qualquer produto da Shopee, mesmo fora da Vitrine de hoje."}
+                </p>
+              </div>
+              <button
+                onClick={buscarNaShopee}
+                disabled={buscando}
+                className="shrink-0 rounded-xl bg-marca-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-marca-600 disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-tinta-fraca"
+              >
+                {buscando
+                  ? "Buscando…"
+                  : `Buscar “${busca.trim()}” na Shopee`}
+              </button>
+            </div>
+
+            {erroShopee && (
+              <p
+                role="alert"
+                className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
+                {erroShopee}
+              </p>
+            )}
+
+            {!buscando && !erroShopee && buscouTermo && resShopee.length === 0 && (
+              <p className="mt-4 text-sm text-tinta-fraca">
+                Nada encontrado na Shopee pra “{buscouTermo}”.
+              </p>
+            )}
+
+            {resShopee.length > 0 && (
+              <>
+                <p className="mt-4 mb-3 text-xs font-semibold uppercase tracking-wide text-tinta-fraca">
+                  Resultado da Shopee · “{buscouTermo}”
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {resShopee.map((produto) => (
+                    <CardProduto
+                      key={produto.itemId}
+                      produto={produto}
+                      onClick={setSelecionado}
+                      jaDivulgado={divulgados.has(produto.itemId)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {selecionado && (
@@ -192,6 +286,7 @@ export function VitrineClient({
           produto={selecionado}
           onClose={() => setSelecionado(null)}
           temApiShopee={temApiShopee}
+          permiteVitrine={!itemIdsShopee.has(selecionado.itemId)}
           onDivulgou={(itemId) =>
             setDivulgados((antes) => new Set(antes).add(itemId))
           }

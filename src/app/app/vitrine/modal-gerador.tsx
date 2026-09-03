@@ -22,6 +22,12 @@ type ModalGeradorProps = {
   onDivulgou?: (itemId: string) => void;
   /** A afiliada já salvou as credenciais da API da Shopee em Configurações. */
   temApiShopee?: boolean;
+  /**
+   * Produto do catálogo do dia (true) ou resultado da busca ao vivo (false).
+   * A vitrine pública e a legenda por IA leem o snapshot do banco, então só
+   * valem pra produto do catálogo — ver busca-acao.ts.
+   */
+  permiteVitrine?: boolean;
 };
 
 /** Espaco que o preview pode ocupar. O template real e bem maior e e escalado. */
@@ -37,9 +43,10 @@ export function ModalGerador({
   onClose,
   onDivulgou,
   temApiShopee = false,
+  permiteVitrine = true,
 }: ModalGeradorProps) {
   const [aba, setAba] = useState<"whatsapp" | "instagram">("whatsapp");
-  const [adicionarNaVitrine, setAdicionarNaVitrine] = useState(true);
+  const [adicionarNaVitrine, setAdicionarNaVitrine] = useState(permiteVitrine);
 
   const [copy, setCopy] = useState("");
   const [gerador] = useState(() => criarGeradorDeCopy());
@@ -392,7 +399,10 @@ export function ModalGerador({
             </div>
           )}
 
-          {/* Toggle da vitrine pública — vale pras duas abas. */}
+          {/* Toggle da vitrine pública — vale pras duas abas. Só pra produto do
+              catálogo: o resultado de busca ao vivo não está no banco, e a
+              vitrine pública lê o snapshot de lá. */}
+          {permiteVitrine && (
           <div className="border-b border-black/[0.06] py-4">
             <label className="flex cursor-pointer items-start gap-3">
               <input
@@ -430,6 +440,7 @@ export function ModalGerador({
               </button>
             )}
           </div>
+          )}
 
           {/* Passo 3 — onde vai postar. */}
           <p className="flex items-center gap-2 pt-5 pb-3 text-sm font-semibold text-tinta">
@@ -636,7 +647,34 @@ export function ModalGerador({
                   <label htmlFor="legenda" className="block text-sm font-semibold text-tinta">
                     Legenda pro post
                   </label>
-                  {legenda ? (
+                  {!permiteVitrine ? (
+                    <>
+                      <textarea
+                        id="legenda"
+                        value={legenda}
+                        onChange={(e) => setLegenda(e.target.value)}
+                        rows={6}
+                        placeholder="Escreva a legenda do seu post aqui…"
+                        className="w-full resize-y rounded-xl border border-black/10 bg-tela p-4 text-sm outline-none focus:border-marca-500"
+                      />
+                      <p className="text-xs text-tinta-fraca">
+                        A legenda automática só vale pros produtos da Vitrine do
+                        dia. Neste, escreva a sua.
+                      </p>
+                      {legenda && (
+                        <button
+                          onClick={() => copiarTexto(legenda, "legenda")}
+                          className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                            copiado === "legenda"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-tela text-tinta hover:bg-black/5"
+                          }`}
+                        >
+                          {copiado === "legenda" ? "Copiado!" : "Copiar legenda"}
+                        </button>
+                      )}
+                    </>
+                  ) : legenda ? (
                     <>
                       <textarea
                         id="legenda"

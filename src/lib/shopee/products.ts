@@ -73,9 +73,15 @@ function toProduto(node: ProductOfferNode): Produto {
 export async function fetchProdutos({
   limit = 200,
   categoryId,
+  keyword,
+  credenciais,
 }: {
   limit?: number;
   categoryId?: number;
+  /** Busca por texto livre no título — usado pela busca sob demanda da Vitrine. */
+  keyword?: string;
+  /** Assina com a credencial da afiliada em vez da casa (ver queryShopee). */
+  credenciais?: { appId: string; appSecret: string };
 } = {}): Promise<Produto[]> {
   const PAGE_SIZE = 50;
   const produtos: Produto[] = [];
@@ -84,12 +90,18 @@ export async function fetchProdutos({
     const data = await queryShopee<{
       productOfferV2: { nodes: ProductOfferNode[] | null };
     }>(
-      `query ProductOffers($page: Int!, $limit: Int!, $productCatId: Int) {
-        productOfferV2(page: $page, limit: $limit, productCatId: $productCatId) {
+      `query ProductOffers($page: Int!, $limit: Int!, $productCatId: Int, $keyword: String) {
+        productOfferV2(page: $page, limit: $limit, productCatId: $productCatId, keyword: $keyword) {
           nodes { ${PRODUCT_FIELDS} }
         }
       }`,
-      { page, limit: PAGE_SIZE, productCatId: categoryId ?? null },
+      {
+        page,
+        limit: PAGE_SIZE,
+        productCatId: categoryId ?? null,
+        keyword: keyword ?? null,
+      },
+      credenciais,
     );
 
     const nodes = data.productOfferV2.nodes;

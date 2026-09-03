@@ -18,6 +18,14 @@ type Filtro = Nicho | "todos";
 /** Quantos cards a Vitrine mostra de uma vez. O catalogo do dia e maior. */
 const LIMITE = 48;
 
+/** Minusculas + sem acento, pra busca casar "camera" com "Câmera". */
+function normalizar(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
 export function VitrineClient({
   produtos,
   itensDivulgados,
@@ -28,6 +36,7 @@ export function VitrineClient({
   temApiShopee: boolean;
 }) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<Ordenacao>(ORDENACAO_PADRAO);
   const [selecionado, setSelecionado] = useState<Produto | null>(null);
   // Cresce quando ela compartilha um produto pelo modal, pra o card virar P&B
@@ -44,10 +53,18 @@ export function VitrineClient({
   }, [produtos]);
 
   const ordenados = useMemo(() => {
-    const filtrados =
+    let filtrados =
       filtro === "todos" ? produtos : produtos.filter((p) => p.nicho === filtro);
+    // Cada palavra digitada tem que aparecer no nome (em qualquer ordem).
+    const termos = normalizar(busca).split(/\s+/).filter(Boolean);
+    if (termos.length) {
+      filtrados = filtrados.filter((p) => {
+        const nome = normalizar(p.nome);
+        return termos.every((t) => nome.includes(t));
+      });
+    }
     return ordenarProdutos(filtrados, ordenacao);
-  }, [produtos, filtro, ordenacao]);
+  }, [produtos, filtro, busca, ordenacao]);
 
   const totalPaginas = Math.max(1, Math.ceil(ordenados.length / LIMITE));
   const paginaAtual = pagina % totalPaginas;
@@ -63,6 +80,11 @@ export function VitrineClient({
 
   function trocarOrdenacao(o: Ordenacao) {
     setOrdenacao(o);
+    setPagina(0);
+  }
+
+  function trocarBusca(v: string) {
+    setBusca(v);
     setPagina(0);
   }
 
@@ -97,6 +119,17 @@ export function VitrineClient({
               </select>
             </label>
           </div>
+
+          <label className="mt-3.5 block">
+            <span className="sr-only">Buscar produto por palavra-chave</span>
+            <input
+              type="search"
+              value={busca}
+              onChange={(e) => trocarBusca(e.target.value)}
+              placeholder="Buscar produto por palavra-chave…"
+              className="w-full rounded-xl border border-black/10 bg-superficie px-3.5 py-2.5 text-sm text-tinta outline-none placeholder:text-tinta-fraca focus:border-marca-500"
+            />
+          </label>
 
           {ordenados.length > LIMITE && (
             <button
@@ -136,7 +169,9 @@ export function VitrineClient({
       <div className="mx-auto w-full max-w-6xl px-4 py-5">
         {visiveis.length === 0 ? (
           <p className="py-16 text-center text-sm text-tinta-fraca">
-            Nenhum produto nesse nicho hoje.
+            {busca.trim()
+              ? `Nenhum produto com “${busca.trim()}” na Vitrine de hoje.`
+              : "Nenhum produto nesse nicho hoje."}
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
